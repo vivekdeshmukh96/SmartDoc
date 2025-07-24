@@ -1,0 +1,54 @@
+enum DocumentStatus {
+  pending,
+  approved,
+  rejected,
+  resubmission, // Added for more detailed flow
+}
+
+class Document {
+  final String id;
+  final String name;
+  final String category;
+  final DocumentStatus status;
+  final String uploadedByUserId;
+  final String uploadedDate;
+  final String? verifiedByUserId;
+  final String? verificationDate;
+  final String? comments;
+
+  Document({
+    required this.id,
+    required this.name,
+    required this.category,
+    this.status = DocumentStatus.pending,
+    required this.uploadedByUserId,
+    required this.uploadedDate,
+    this.verifiedByUserId,
+    this.verificationDate,
+    this.comments,
+  });
+
+  Document copyWith({
+    String? id,
+    String? name,
+    String? category,
+    DocumentStatus? status,
+    String? uploadedByUserId,
+    String? uploadedDate,
+    String? verifiedByUserId,
+    String? verificationDate,
+    String? comments,
+  }) {
+    return Document(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      status: status ?? this.status,
+      uploadedByUserId: uploadedByUserId ?? this.uploadedByUserId,
+      uploadedDate: uploadedDate ?? this.uploadedDate,
+      verifiedByUserId: verifiedByUserId ?? this.verifiedByUserId,
+      verificationDate: verificationDate ?? this.verificationDate,
+      comments: comments ?? this.comments,
+    );
+  }
+}
