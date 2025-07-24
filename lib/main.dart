@@ -49,7 +49,7 @@ class SmartDocApp extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
               textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              elevation: 4,
+              elevation: 3,
             ),
           ),
           textButtonTheme: TextButtonThemeData(
