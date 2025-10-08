@@ -43,7 +43,7 @@ class SmartDocApp extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          cardTheme: CardTheme(
+          cardTheme: CardThemeData(
             elevation: 6,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
