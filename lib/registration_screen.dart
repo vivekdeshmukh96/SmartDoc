@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class RegistrationScreen extends StatefulWidget {
   final String role;
@@ -69,7 +69,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
 
     final inputImage = InputImage.fromFile(_studentIdCard!);
-    final textRecognizer = GoogleMlKit.vision.textRecognizer();
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     final RecognizedText recognizedText =
         await textRecognizer.processImage(inputImage);
 
