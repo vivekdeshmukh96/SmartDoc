@@ -12,6 +12,7 @@ import 'models/role.dart';
 class AppState extends ChangeNotifier {
   User? _currentUser;
   final List<Document> _documents = [];
+  List<User> _users = [];
   final List<String> _categories = ['ID Card', 'Marksheet', 'Bonafide', 'Fee Receipt', 'Certificate'];
   final Uuid _uuid = const Uuid();
 
@@ -20,6 +21,7 @@ class AppState extends ChangeNotifier {
 
   User? get currentUser => _currentUser;
   List<Document> get documents => List.unmodifiable(_documents);
+  List<User> get users => List.unmodifiable(_users);
   List<String> get categories => List.unmodifiable(_categories);
 
   // --- Authentication ---
@@ -31,6 +33,7 @@ class AppState extends ChangeNotifier {
         final userData = userDoc.data();
         if(userData != null) {
           _currentUser = User.fromMap(userData);
+          await fetchUsers(); // Fetch all users after login
         }
       }
       notifyListeners();
@@ -42,7 +45,20 @@ class AppState extends ChangeNotifier {
   Future<void> logout() async {
     await _auth.signOut();
     _currentUser = null;
+    _users = []; // Clear users on logout
     notifyListeners();
+  }
+
+  // --- User Management ---
+  Future<void> fetchUsers() async {
+    try {
+      final snapshot = await _firestore.collection('users').get();
+      _users = snapshot.docs.map((doc) => User.fromMap(doc.data())).toList();
+      notifyListeners();
+    } catch (e) {
+      // Handle errors appropriately
+      print(e);
+    }
   }
 
   // --- Document Management ---
