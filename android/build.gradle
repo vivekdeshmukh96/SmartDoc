@@ -27,10 +27,3 @@ subprojects {
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
-
-allprojects {
-    tasks.withType(JavaCompile) {
-        options.fork = true
-        options.forkOptions.javaHome = file("C:\\Program Files\\Eclipse Adoptium\\jdk-25.0.0.36-hotspot")
-    }
-}
