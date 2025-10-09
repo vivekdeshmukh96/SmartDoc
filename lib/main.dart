@@ -2,12 +2,23 @@ import 'package:collegeapplication/firebase_options.dart';
 import 'package:collegeapplication/role_selection_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_app_check/firebase_app_check.dart'; // Import App Check
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Activate App Check
+  await FirebaseAppCheck.instance.activate(
+    // For web platforms, you must provide a reCAPTCHA v3 site key.
+    // You can get this from the Google Cloud console.
+    webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
+    // For Android, the default provider is Play Integrity. You can also use SafetyNet.
+    androidProvider: AndroidProvider.playIntegrity,
+  );
+
   runApp(SmartDocApp());
 }
 
