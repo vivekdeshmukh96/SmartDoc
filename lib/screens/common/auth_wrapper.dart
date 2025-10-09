@@ -1,14 +1,13 @@
-import 'package:collegeapplication/models/role.dart';
+import 'package:collegeapplication/app_state.dart';
+import 'package:collegeapplication/models/user.dart';
+import 'package:collegeapplication/screens/admin/admin_dashboard_screen.dart';
+import 'package:collegeapplication/screens/faculty/faculty_dashboard_screen.dart';
 import 'package:collegeapplication/screens/login_screen.dart';
 import 'package:collegeapplication/screens/role_selection_screen.dart';
+import 'package:collegeapplication/screens/student/student_dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../app_state.dart';
-import '../models/user.dart';
-import 'admin/admin_dashboard_screen.dart';
-import 'faculty/faculty_dashboard_screen.dart';
-import 'student/student_dashboard_screen.dart';
+import 'package:collegeapplication/models/role.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -19,17 +18,15 @@ class AuthWrapper extends StatelessWidget {
     final user = appState.currentUser;
 
     if (user == null) {
-      return const LoginScreen(
-        role: Role.student,
-      );
+      return RoleSelectionScreen();
     }
 
     switch (user.role) {
-      case UserRole.admin:
+      case Role.admin:
         return const AdminDashboardScreen();
-      case UserRole.faculty:
+      case Role.faculty:
         return const FacultyDashboardScreen();
-      case UserRole.student:
+      case Role.student:
         return const StudentDashboardScreen();
       default:
         return RoleSelectionScreen();
