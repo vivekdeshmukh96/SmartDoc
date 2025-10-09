@@ -9,7 +9,8 @@ import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
-  const StudentDashboardScreen({super.key});
+  final int initialIndex;
+  const StudentDashboardScreen({super.key, this.initialIndex = 0});
 
   @override
   State<StudentDashboardScreen> createState() => _StudentDashboardScreenState();
@@ -17,6 +18,11 @@ class StudentDashboardScreen extends StatefulWidget {
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   int _selectedIndex = 0;
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {

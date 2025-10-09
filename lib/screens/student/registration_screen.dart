@@ -1,6 +1,6 @@
-
 import 'dart:io';
 
+import 'package:collegeapplication/screens/student/student_dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -157,6 +157,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         final userData = {
           'email': email,
           'role': role,
+          'name': studentName,
           if (widget.role == Role.student) ...{
             'studentName': studentName,
             'year': year,
@@ -168,7 +169,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         await _firestore.collection('users').doc(user.uid).set(userData);
 
         if (mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const StudentDashboardScreen(initialIndex: 1),
+            ),
+            (route) => false,
+          );
         }
       }
     } on FirebaseAuthException catch (e) {
