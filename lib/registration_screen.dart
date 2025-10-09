@@ -1,6 +1,11 @@
+
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 
 class RegistrationScreen extends StatefulWidget {
   final String role;
@@ -26,6 +31,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _sectionController = TextEditingController();
   final _studentIdController = TextEditingController();
 
+  File? _studentIdCard;
+  bool _isOcrInProgress = false;
+
   @override
   void dispose() {
     // Dispose controllers to free up resources
@@ -36,6 +44,68 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _sectionController.dispose();
     _studentIdController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _studentIdCard = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _performOcr() async {
+    if (_studentIdCard == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please select an image first.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isOcrInProgress = true;
+    });
+
+    final inputImage = InputImage.fromFile(_studentIdCard!);
+    final textRecognizer = GoogleMlKit.vision.textRecognizer();
+    final RecognizedText recognizedText =
+        await textRecognizer.processImage(inputImage);
+
+    String extractedName = "";
+    String extractedId = "";
+
+    for (TextBlock block in recognizedText.blocks) {
+      for (TextLine line in block.lines) {
+        // Simple logic to find name and ID, might need to be adjusted
+        if (line.text
+            .toLowerCase()
+            .contains(_studentNameController.text.toLowerCase())) {
+          extractedName = _studentNameController.text;
+        }
+        if (line.text.contains(_studentIdController.text)) {
+          extractedId = _studentIdController.text;
+        }
+      }
+    }
+
+    textRecognizer.close();
+
+    setState(() {
+      _isOcrInProgress = false;
+    });
+
+    if (extractedName == _studentNameController.text &&
+        extractedId == _studentIdController.text) {
+      _register();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'OCR validation failed. Please check the entered details and the uploaded ID card.')),
+      );
+    }
   }
 
   Future<void> _register() async {
@@ -55,7 +125,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     try {
       // Create user with email and password
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -74,7 +145,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             'studentId': studentId,
           }
         };
-        
+
         // Save additional user data to Firestore
         await _firestore.collection('users').doc(user.uid).set(userData);
 
@@ -114,6 +185,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   SizedBox(height: 8),
                   TextFormField(
+                    controller: _studentIdController,
+                    decoration: InputDecoration(labelText: 'Student ID'),
+                    validator: (value) =>
+                        value!.isEmpty ? 'Please enter your student ID' : null,
+                  ),
+                  SizedBox(height: 8),
+                  TextFormField(
                     controller: _yearController,
                     decoration: InputDecoration(labelText: 'Year'),
                     validator: (value) =>
@@ -127,11 +205,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         value!.isEmpty ? 'Please enter your section' : null,
                   ),
                   SizedBox(height: 8),
-                  TextFormField(
-                    controller: _studentIdController,
-                    decoration: InputDecoration(labelText: 'Student ID'),
-                    validator: (value) =>
-                        value!.isEmpty ? 'Please enter your student ID' : null,
+                  _studentIdCard == null
+                      ? Text('No image selected.')
+                      : Image.file(_studentIdCard!),
+                  ElevatedButton(
+                    onPressed: _pickImage,
+                    child: Text('Upload Student ID Card'),
                   ),
                   SizedBox(height: 8),
                 ],
@@ -150,10 +229,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       value!.isEmpty ? 'Please enter your password' : null,
                 ),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _register,
-                  child: Text('Register'),
-                ),
+                _isOcrInProgress
+                    ? CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed:
+                            widget.role == 'Student' ? _performOcr : _register,
+                        child: Text('Register'),
+                      ),
               ],
             ),
           ),
