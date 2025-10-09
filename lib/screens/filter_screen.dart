@@ -105,7 +105,7 @@ class _FilterScreenState extends State<FilterScreen> {
     final imageBytes = await _image.readAsBytes();
     final image = img.decodeImage(imageBytes);
     if (image != null) {
-      final filtered = img.brightness(image, brightness: 50);
+      final filtered = img.adjustColor(image, brightness: 1.25);
       final tempDir = await getTemporaryDirectory();
       final tempFile = File('${tempDir.path}/filtered.jpg');
       await tempFile.writeAsBytes(img.encodeJpg(filtered));
