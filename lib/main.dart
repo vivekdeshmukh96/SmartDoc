@@ -1,5 +1,4 @@
-
-import 'package:collegeapplication/screens/role_selection_screen.dart';
+import 'package:collegeapplication/screens/common/auth_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -44,7 +43,7 @@ class SmartDocApp extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          cardTheme: CardTheme(
+          cardTheme: CardThemeData(
             elevation: 6,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -91,7 +90,7 @@ class SmartDocApp extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           ),
         ),
-        home: RoleSelectionScreen(),
+        home: const AuthWrapper(),
       ),
     );
   }

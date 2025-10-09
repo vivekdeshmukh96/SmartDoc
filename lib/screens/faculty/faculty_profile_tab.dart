@@ -1,8 +1,7 @@
+import 'package:collegeapplication/screens/role_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../app_state.dart';
-import '../login_screen.dart';
-import 'package:collegeapplication/utils/string_extensions.dart';
 
 class FacultyProfileTab extends StatelessWidget {
   const FacultyProfileTab({super.key});
@@ -45,22 +44,12 @@ class FacultyProfileTab extends StatelessWidget {
                         currentUser?.email ?? 'N/A',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
                       ),
-                      // const SizedBox(height: 8),
-                      // Chip(
-                      //   label: Text(
-                      //     currentUser?.role.toString().split('.').last.capitalize() ?? 'N/A',
-                      //     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      //   ),
-                      //   backgroundColor: Colors.orangeAccent.shade400,
-                      //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      // ),
                       const SizedBox(height: 30),
                       ListTile(
                         leading: const Icon(Icons.info_outline, color: Colors.orangeAccent),
                         title: const Text('User ID'),
                         subtitle: Text(currentUser?.id ?? 'N/A'),
                       ),
-                      // Add more profile details here if needed
                     ],
                   ),
                 ),
@@ -72,7 +61,7 @@ class FacultyProfileTab extends StatelessWidget {
                     appState.logout();
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      MaterialPageRoute(builder: (context) => RoleSelectionScreen()),
                           (Route<dynamic> route) => false,
                     );
                   },

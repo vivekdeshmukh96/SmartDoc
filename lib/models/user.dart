@@ -8,14 +8,18 @@ class User {
   final String id;
   final String name;
   final String email;
-  final String password; // In a real app, this would be hashed
+  final String password; 
   final UserRole role;
+  final String? rollNumber;
+  final String? className;
 
   User({
     required this.id,
     required this.name,
     required this.email,
-    this.password = 'password', // Default password for simulation
+    this.password = 'password', 
     required this.role,
+    this.rollNumber,
+    this.className,
   });
 }

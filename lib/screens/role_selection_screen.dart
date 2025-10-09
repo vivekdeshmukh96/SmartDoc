@@ -1,44 +1,44 @@
-
-import 'package:collegeapplication/screens/placeholder_screen.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'package:collegeapplication/models/role.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
+  const RoleSelectionScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Select Your Role'),
+        title: const Text('Select Your Role'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             ElevatedButton(
-              child: Text('Student'),
+              child: const Text('Student'),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginScreen(role: Role.student)),
+                  MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.student)),
                 );
               },
             ),
             ElevatedButton(
-              child: Text('Faculty'),
+              child: const Text('Faculty'),
               onPressed: () {
-                 Navigator.push(
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Faculty')),
+                  MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.faculty)),
                 );
               },
             ),
             ElevatedButton(
-              child: Text('Admin'),
+              child: const Text('Admin'),
               onPressed: () {
-                 Navigator.push(
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Admin')),
+                  MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.admin)),
                 );
               },
             ),

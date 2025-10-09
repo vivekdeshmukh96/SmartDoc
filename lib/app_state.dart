@@ -11,7 +11,7 @@ class AppState extends ChangeNotifier {
   final List<Document> _documents = [];
   final List<String> _categories = ['ID Card', 'Marksheet', 'Bonafide', 'Fee Receipt', 'Certificate'];
   final List<User> _users = [
-    User(id: 'student1', email: 'student@college.edu', role: UserRole.student, name: 'Alice Student'),
+    User(id: 'student1', email: 'student@college.edu', role: UserRole.student, name: 'Alice Student', rollNumber: '12345', className: 'CS101'),
     User(id: 'faculty1', email: 'faculty@college.edu', role: UserRole.faculty, name: 'Dr. Bob Faculty'),
     User(id: 'admin1', email: 'admin@college.edu', role: UserRole.admin, name: 'Ms. Carol Admin'),
   ];
@@ -50,7 +50,7 @@ class AppState extends ChangeNotifier {
     };
   }
 
-  void addDocument(String name, String category, Uint8List imageBytes) {
+  Future<void> addDocument(String name, String category, Uint8List imageBytes) async {
     if (name.isEmpty || category.isEmpty) {
       throw Exception('Document name and category cannot be empty.');
     }
@@ -100,14 +100,14 @@ class AppState extends ChangeNotifier {
   }
 
   // --- User Management (Simplified) ---
-  void addUser(String name, String email, String password, UserRole role) {
+  void addUser(String name, String email, String password, UserRole role, {String? rollNumber, String? className}) {
     if (email.isEmpty || password.isEmpty || name.isEmpty) {
       throw Exception('All fields are required.');
     }
     if (_users.any((user) => user.email == email)) {
       throw Exception('User with this email already exists.');
     }
-    _users.add(User(id: _uuid.v4(), name: name, email: email, role: role));
+    _users.add(User(id: _uuid.v4(), name: name, email: email, role: role, rollNumber: rollNumber, className: className));
     notifyListeners();
   }
 
