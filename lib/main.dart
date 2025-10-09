@@ -31,7 +31,7 @@ class SmartDocApp extends StatelessWidget {
           hintColor: Colors.lightBlueAccent,
           fontFamily: 'Inter',
           scaffoldBackgroundColor: Colors.blueGrey[50],
-          appBarTheme: AppBarTheme(
+          appBarTheme: const AppBarTheme(
             backgroundColor: Colors.blueAccent,
             foregroundColor: Colors.white,
             elevation: 4,

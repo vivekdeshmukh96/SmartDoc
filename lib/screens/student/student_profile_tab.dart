@@ -2,95 +2,110 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app_state.dart';
-import '../login_screen.dart';
-import 'package:collegeapplication/utils/string_extensions.dart';
+import '../../models/user.dart';
+import '../../utils/string_extensions.dart';
 
 class StudentProfileTab extends StatelessWidget {
   const StudentProfileTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, appState, child) {
-        final currentUser = appState.currentUser;
+    final appState = Provider.of<AppState>(context);
+    final currentUser = appState.currentUser;
 
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildProfileHeader(context, currentUser),
+          const SizedBox(height: 30),
+          _buildProfileInfoCard(currentUser),
+          const SizedBox(height: 30),
+          ElevatedButton(
+            onPressed: () {
+              appState.logout();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: const Text('Logout', style: TextStyle(fontSize: 18)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(BuildContext context, User? currentUser) {
+    return Column(
+      children: [
+        const CircleAvatar(
+          radius: 60,
+          backgroundColor: Colors.white,
+          child: Icon(Icons.person, size: 80, color: Colors.blueAccent),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          currentUser?.name ?? 'N/A',
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          currentUser?.role.toString().split('.').last.capitalize() ?? 'N/A',
+          style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileInfoCard(User? currentUser) {
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Profile Information',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+            ),
+            const Divider(height: 30, thickness: 1),
+            _buildInfoRow(Icons.email, 'Email', currentUser?.email ?? 'N/A'),
+            _buildInfoRow(Icons.school, 'Roll Number', currentUser?.rollNumber ?? 'N/A'),
+            _buildInfoRow(Icons.class_, 'Class', currentUser?.className ?? 'N/A'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueGrey, size: 28),
+          const SizedBox(width: 20),
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'My Profile',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                label,
+                style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w500),
               ),
-              const SizedBox(height: 24),
-              Card(
-                elevation: 6,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      const CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.blueAccent,
-                        child: Icon(Icons.person, size: 60, color: Colors.white),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        currentUser?.name ?? 'N/A',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        currentUser?.email ?? 'N/A',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
-                      ),
-                      const SizedBox(height: 8),
-                      Chip(
-                        label: Text(
-                          currentUser?.role.toString().split('.').last.capitalize() ?? 'N/A',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        backgroundColor: Colors.blueAccent.shade400,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      ),
-                      const SizedBox(height: 30),
-                      ListTile(
-                        leading: const Icon(Icons.info_outline, color: Colors.blueAccent),
-                        title: const Text('User ID'),
-                        subtitle: Text(currentUser?.id ?? 'N/A'),
-                      ),
-                      // Add more profile details here if needed
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    appState.logout();
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          (Route<dynamic> route) => false,
-                    );
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
             ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

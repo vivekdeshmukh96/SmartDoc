@@ -1,3 +1,4 @@
+import 'package:collegeapplication/models/role.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -5,9 +6,11 @@ import '../app_state.dart';
 import '../models/user.dart';
 import '../widgets/message_box.dart';
 import 'common/auth_wrapper.dart';
+import '../utils/string_extensions.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final Role role;
+  const LoginScreen({super.key, required this.role});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -16,7 +19,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  UserRole? _selectedRole;
   bool _isLoading = false;
 
   @override
@@ -27,8 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty || _selectedRole == null) {
-      showMessageBox(context, 'Error', 'Please fill all fields and select a role.');
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      showMessageBox(context, 'Error', 'Please fill all fields.');
       return;
     }
 
@@ -40,8 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final appState = Provider.of<AppState>(context, listen: false);
       appState.login(_emailController.text, _passwordController.text);
 
-      // Check if the logged-in user's role matches the selected role
-      if (appState.currentUser!.role != _selectedRole) {
+      if (appState.currentUser!.role.toString().split('.').last != widget.role.toString().split('.').last) {
         throw Exception('Selected role does not match user account role.');
       }
 
@@ -92,9 +93,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.blueAccent,
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      'Login to SmartDoc',
-                      style: TextStyle(
+                    Text(
+                      'Login as ${widget.role.toString().split('.').last.capitalize()}',
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.blueGrey,
@@ -120,25 +121,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icon(Icons.lock),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    DropdownButtonFormField<UserRole>(
-                      value: _selectedRole,
-                      decoration: const InputDecoration(
-                        labelText: 'Select Role',
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                      items: UserRole.values.map((role) {
-                        return DropdownMenuItem<UserRole>(
-                          value: role,
-                          child: Text(role.toString().split('.').last.capitalize()),
-                        );
-                      }).toList(),
-                      onChanged: (role) {
-                        setState(() {
-                          _selectedRole = role;
-                        });
-                      },
-                    ),
                     const SizedBox(height: 30),
                     _isLoading
                         ? const CircularProgressIndicator()
@@ -162,12 +144,5 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
-}
-
-// Extension for capitalizing enum names
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }

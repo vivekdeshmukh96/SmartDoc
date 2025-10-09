@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
@@ -25,7 +26,7 @@ class AppState extends ChangeNotifier {
   void login(String email, String password) {
     // Simulate authentication
     final user = _users.firstWhere(
-          (u) => u.email == email && u.password == password, // In real app, hash password
+          (u) => u.email == email, // In real app, hash password
       orElse: () => throw Exception('Invalid credentials'),
     );
     _currentUser = user;
@@ -38,7 +39,18 @@ class AppState extends ChangeNotifier {
   }
 
   // --- Document Management ---
-  void addDocument(String name, String category, String uploadedByUserId) {
+  Future<Map<String, String>> getDocumentAnalysis(Uint8List imageBytes) async {
+    // Simulate AI document analysis (e.g., calling a cloud service)
+    await Future.delayed(const Duration(seconds: 2)); 
+
+    // Simulated result
+    return {
+      'name': 'Scanned_Document_123.pdf',
+      'category': 'Marksheet',
+    };
+  }
+
+  void addDocument(String name, String category, Uint8List imageBytes) {
     if (name.isEmpty || category.isEmpty) {
       throw Exception('Document name and category cannot be empty.');
     }
@@ -47,8 +59,9 @@ class AppState extends ChangeNotifier {
       name: name,
       category: category,
       status: DocumentStatus.pending,
-      uploadedByUserId: uploadedByUserId,
+      uploadedByUserId: _currentUser!.id,
       uploadedDate: DateFormat('dd/MM/yyyy').format(DateTime.now()),
+      // imageBytes: imageBytes, // If you want to store the image bytes
     );
     _documents.add(newDoc);
     notifyListeners();
@@ -94,7 +107,7 @@ class AppState extends ChangeNotifier {
     if (_users.any((user) => user.email == email)) {
       throw Exception('User with this email already exists.');
     }
-    _users.add(User(id: _uuid.v4(), name: name, email: email, password: password, role: role));
+    _users.add(User(id: _uuid.v4(), name: name, email: email, role: role));
     notifyListeners();
   }
 
