@@ -63,6 +63,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       );
       return;
     }
+     if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     setState(() {
       _isOcrInProgress = true;
@@ -73,20 +76,30 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final RecognizedText recognizedText =
         await textRecognizer.processImage(inputImage);
 
-    String extractedName = "";
-    String extractedId = "";
+    final expectedName = _studentNameController.text.trim().toLowerCase();
+    final expectedId =
+        _studentIdController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
 
-    for (TextBlock block in recognizedText.blocks) {
-      for (TextLine line in block.lines) {
-        // Simple logic to find name and ID, might need to be adjusted
-        if (line.text
-            .toLowerCase()
-            .contains(_studentNameController.text.toLowerCase())) {
-          extractedName = _studentNameController.text;
+    bool isNameFound = false;
+    bool isIdFound = false;
+
+    // Check for name: A simple contains check on the whole lowercased text is a good start.
+    if (recognizedText.text.toLowerCase().contains(expectedName)) {
+      isNameFound = true;
+    }
+
+    // Check for ID: More robust check by normalizing the OCR text
+    for (final block in recognizedText.blocks) {
+      for (final line in block.lines) {
+        // Normalize the OCR line text by keeping only numbers
+        final ocrLineNumeric = line.text.replaceAll(RegExp(r'[^0-9]'), '');
+        if (ocrLineNumeric.contains(expectedId)) {
+          isIdFound = true;
+          break; // Found the ID, no need to check other lines in this block
         }
-        if (line.text.contains(_studentIdController.text)) {
-          extractedId = _studentIdController.text;
-        }
+      }
+      if (isIdFound) {
+        break; // Found the ID, no need to check other blocks
       }
     }
 
@@ -96,25 +109,32 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _isOcrInProgress = false;
     });
 
-    if (extractedName == _studentNameController.text &&
-        extractedId == _studentIdController.text) {
+    if (isNameFound && isIdFound) {
       _register();
     } else {
+      // Construct a specific error message
+      String errorMessage = 'OCR validation failed. ';
+      if (!isNameFound && !isIdFound) {
+        errorMessage += 'Could not find your name or student ID on the card.';
+      } else if (!isNameFound) {
+        errorMessage += 'Could not find your name on the card.';
+      } else {
+        errorMessage += 'Could not find your student ID on the card.';
+      }
+      errorMessage += ' Please check the details and the uploaded image.';
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'OCR validation failed. Please check the entered details and the uploaded ID card.')),
+        SnackBar(content: Text(errorMessage)),
       );
     }
   }
 
   Future<void> _register() async {
-    // First, validate the form.
-    if (!_formKey.currentState!.validate()) {
+    // The form is already validated in _performOcr for students
+    if (widget.role != 'Student' && !_formKey.currentState!.validate()) {
       return;
     }
 
-    // **THE FIX**: Read all values from controllers BEFORE the async gap.
     final email = _emailController.text;
     final password = _passwordController.text;
     final studentName = _studentNameController.text;
@@ -124,7 +144,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final role = widget.role;
 
     try {
-      // Create user with email and password
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -134,7 +153,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       User? user = userCredential.user;
 
       if (user != null) {
-        // Prepare user data using the variables we captured earlier
         final userData = {
           'email': email,
           'role': role,
@@ -146,10 +164,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           }
         };
 
-        // Save additional user data to Firestore
         await _firestore.collection('users').doc(user.uid).set(userData);
 
-        // Navigate back to the first screen if the widget is still mounted
         if (mounted) {
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
