@@ -1,9 +1,11 @@
+import 'package:collegeapplication/models/role.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../app_state.dart';
 import '../../models/user.dart';
 import '../../widgets/message_box.dart';
+import '../../utils/string_extensions.dart';
 
 class AdminUsersTab extends StatefulWidget {
   const AdminUsersTab({super.key});
@@ -16,7 +18,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  UserRole? _selectedRole;
+  Role? _selectedRole;
 
   @override
   void dispose() {
@@ -59,11 +61,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock)),
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<UserRole>(
+                DropdownButtonFormField<Role>(
                   value: _selectedRole,
                   decoration: const InputDecoration(labelText: 'Role', prefixIcon: Icon(Icons.assignment_ind)),
-                  items: UserRole.values.map((role) {
-                    return DropdownMenuItem<UserRole>(
+                  items: Role.values.map((role) {
+                    return DropdownMenuItem<Role>(
                       value: role,
                       child: Text(role.toString().split('.').last.capitalize()),
                     );
@@ -201,20 +203,20 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: user.role == UserRole.student
+                          backgroundColor: user.role == Role.student
                               ? Colors.blue.shade100
-                              : user.role == UserRole.faculty
+                              : user.role == Role.faculty
                               ? Colors.orange.shade100
                               : Colors.red.shade100,
                           child: Icon(
-                            user.role == UserRole.student
+                            user.role == Role.student
                                 ? Icons.school
-                                : user.role == UserRole.faculty
+                                : user.role == Role.faculty
                                 ? Icons.person_outline
                                 : Icons.admin_panel_settings,
-                            color: user.role == UserRole.student
+                            color: user.role == Role.student
                                 ? Colors.blue
-                                : user.role == UserRole.faculty
+                                : user.role == Role.faculty
                                 ? Colors.orange
                                 : Colors.red,
                           ),
@@ -236,11 +238,5 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         );
       },
     );
-  }
-}
-
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }
