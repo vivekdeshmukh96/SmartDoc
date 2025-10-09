@@ -1,4 +1,5 @@
 import 'package:collegeapplication/models/role.dart';
+import 'package:collegeapplication/screens/student/registration_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -128,11 +129,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _login,
                       child: const Text('Login'),
                     ),
-                    const SizedBox(height: 20),
+                     if (widget.role == Role.student)
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => RegistrationScreen(role: widget.role)),
+                          );
+                        },
+                        child: const Text('Sign Up'),
+                      ),
                     TextButton(
                       onPressed: () {
-                        // TODO: Implement Forgot Password / Signup
-                        showMessageBox(context, 'Feature', 'Forgot Password / Signup not implemented in prototype.');
+                        // TODO: Implement Forgot Password
+                        showMessageBox(context, 'Feature', 'Forgot Password not implemented in prototype.');
                       },
                       child: const Text('Forgot Password?'),
                     ),

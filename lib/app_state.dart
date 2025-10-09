@@ -5,15 +5,16 @@ import 'package:uuid/uuid.dart';
 
 import 'models/document.dart';
 import 'models/user.dart';
+import 'models/role.dart';
 
 class AppState extends ChangeNotifier {
   User? _currentUser;
   final List<Document> _documents = [];
   final List<String> _categories = ['ID Card', 'Marksheet', 'Bonafide', 'Fee Receipt', 'Certificate'];
   final List<User> _users = [
-    User(id: 'student1', email: 'student@college.edu', role: UserRole.student, name: 'Alice Student', rollNumber: '12345', className: 'CS101'),
-    User(id: 'faculty1', email: 'faculty@college.edu', role: UserRole.faculty, name: 'Dr. Bob Faculty'),
-    User(id: 'admin1', email: 'admin@college.edu', role: UserRole.admin, name: 'Ms. Carol Admin'),
+    User(id: 'student1', email: 'student@college.edu', role: Role.student, name: 'Alice Student', rollNumber: '12345', className: 'CS101'),
+    User(id: 'faculty1', email: 'faculty@college.edu', role: Role.faculty, name: 'Dr. Bob Faculty'),
+    User(id: 'admin1', email: 'admin@college.edu', role: Role.admin, name: 'Ms. Carol Admin'),
   ];
   final Uuid _uuid = const Uuid();
 
@@ -37,6 +38,16 @@ class AppState extends ChangeNotifier {
     _currentUser = null;
     notifyListeners();
   }
+
+  void registerUser(User newUser, String password) {
+    if (_users.any((user) => user.email == newUser.email)) {
+      throw Exception('User with this email already exists.');
+    }
+    _users.add(newUser);
+    _currentUser = newUser;
+    notifyListeners();
+  }
+
 
   // --- Document Management ---
   Future<Map<String, String>> getDocumentAnalysis(Uint8List imageBytes) async {
@@ -100,7 +111,7 @@ class AppState extends ChangeNotifier {
   }
 
   // --- User Management (Simplified) ---
-  void addUser(String name, String email, String password, UserRole role, {String? rollNumber, String? className}) {
+  void addUser(String name, String email, String password, Role role, {String? rollNumber, String? className}) {
     if (email.isEmpty || password.isEmpty || name.isEmpty) {
       throw Exception('All fields are required.');
     }

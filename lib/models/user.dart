@@ -1,15 +1,10 @@
-enum UserRole {
-  student,
-  faculty,
-  admin,
-}
+import 'package:collegeapplication/models/role.dart';
 
 class User {
   final String id;
   final String name;
   final String email;
-  final String password; 
-  final UserRole role;
+  final Role role;
   final String? rollNumber;
   final String? className;
 
@@ -17,7 +12,6 @@ class User {
     required this.id,
     required this.name,
     required this.email,
-    this.password = 'password', 
     required this.role,
     this.rollNumber,
     this.className,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import 'package:collegeapplication/screens/login_screen.dart';
 import 'package:collegeapplication/models/role.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
