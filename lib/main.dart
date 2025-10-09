@@ -1,10 +1,11 @@
+
+import 'package:collegeapplication/screens/role_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:collegeapplication/firebase_options.dart';
 
 import 'package:collegeapplication/app_state.dart';
-import 'package:collegeapplication/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,7 +91,7 @@ class SmartDocApp extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           ),
         ),
-        home: const SplashScreen(),
+        home: RoleSelectionScreen(),
       ),
     );
   }
