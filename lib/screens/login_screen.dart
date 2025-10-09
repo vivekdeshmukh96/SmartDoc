@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
-      appState.login(_emailController.text, _passwordController.text);
+      await appState.login(_emailController.text, _passwordController.text);
 
       if (appState.currentUser!.role.toString().split('.').last != widget.role.toString().split('.').last) {
         throw Exception('Selected role does not match user account role.');
