@@ -1,10 +1,9 @@
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'packagef:firebase_storage/firebase_storage.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as path;
 
 import 'filter_screen.dart';
@@ -79,7 +78,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error scanning document: \$e'),
+          content: Text('Error scanning document: $e'),
         ),
       );
     } finally {
