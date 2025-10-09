@@ -1,6 +1,8 @@
 
+import 'package:collegeapplication/screens/placeholder_screen.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'package:collegeapplication/models/role.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   @override
@@ -18,20 +20,26 @@ class RoleSelectionScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginScreen(role: 'Student')),
+                  MaterialPageRoute(builder: (context) => LoginScreen(role: Role.student)),
                 );
               },
             ),
             ElevatedButton(
               child: Text('Faculty'),
               onPressed: () {
-                // Navigate to Faculty login/registration
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Faculty')),
+                );
               },
             ),
             ElevatedButton(
               child: Text('Admin'),
               onPressed: () {
-                // Navigate to Admin login/registration
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Admin')),
+                );
               },
             ),
           ],

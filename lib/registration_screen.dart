@@ -6,9 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:collegeapplication/models/role.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  final String role;
+  final Role role;
 
   RegistrationScreen({required this.role});
 
@@ -131,7 +132,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Future<void> _register() async {
     // The form is already validated in _performOcr for students
-    if (widget.role != 'Student' && !_formKey.currentState!.validate()) {
+    if (widget.role != Role.student && !_formKey.currentState!.validate()) {
       return;
     }
 
@@ -141,7 +142,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final year = _yearController.text;
     final section = _sectionController.text;
     final studentId = _studentIdController.text;
-    final role = widget.role;
+    final role = widget.role.toString().split('.').last;
 
     try {
       UserCredential userCredential =
@@ -156,7 +157,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         final userData = {
           'email': email,
           'role': role,
-          if (role == 'Student') ...{
+          if (widget.role == Role.student) ...{
             'studentName': studentName,
             'year': year,
             'section': section,
@@ -183,7 +184,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.role} Registration'),
+        title: Text('${widget.role.toString().split('.').last} Registration'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -192,7 +193,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: <Widget>[
-                if (widget.role == 'Student') ...[
+                if (widget.role == Role.student) ...[
                   TextFormField(
                     controller: _studentNameController,
                     decoration: InputDecoration(labelText: 'Student Name'),
@@ -249,7 +250,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ? CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed:
-                            widget.role == 'Student' ? _performOcr : _register,
+                            widget.role == Role.student ? _performOcr : _register,
                         child: Text('Register'),
                       ),
               ],

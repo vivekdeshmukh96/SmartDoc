@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart'; // Required for Material Design icons if used in extensions
-
-extension StringExtension on String {
+extension StringExtensions on String {
   String capitalize() {
-    if (isEmpty) {
+    if (this.isEmpty) {
       return this;
     }
-    return "${this[0].toUpperCase()}${substring(1)}";
+    return this[0].toUpperCase() + this.substring(1);
   }
 }

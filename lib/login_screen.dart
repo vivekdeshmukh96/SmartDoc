@@ -1,9 +1,11 @@
+import 'package:collegeapplication/screens/student/student_dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'registration_screen.dart';
+import 'package:collegeapplication/models/role.dart';
 
 class LoginScreen extends StatefulWidget {
-  final String role;
+  final Role role;
 
   LoginScreen({required this.role});
 
@@ -24,7 +26,16 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text,
           password: _passwordController.text,
         );
-        // Navigate to the home screen after successful login
+        if (widget.role == Role.student) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StudentDashboardScreen(),
+            ),
+          );
+        } else {
+          // Navigate to the verifier dashboard
+        }
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message ?? 'Login failed')),
@@ -37,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.role} Login'),
+        title: Text('${widget.role.toString().split('.').last} Login'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

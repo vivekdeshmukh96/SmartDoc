@@ -50,11 +50,11 @@ class StudentNotificationsTab extends StatelessWidget {
             .toList();
 
         // Sort notifications by date, most recent first
-        // notifications.sort((a, b) {
-        //   final DateTime dateA = DateFormat('dd/MM/yyyy').parse();
-        //   final DateTime dateB = DateFormat('dd/MM/yyyy').parse();
-        //   return dateB.compareTo(dateA);
-        // });
+        notifications.sort((a, b) {
+          final DateTime dateA = DateFormat('dd/MM/yyyy').parse(a!['date']);
+          final DateTime dateB = DateFormat('dd/MM/yyyy').parse(b!['date']);
+          return dateB.compareTo(dateA);
+        });
 
         return Padding(
           padding: const EdgeInsets.all(16.0),
@@ -93,11 +93,11 @@ class StudentNotificationsTab extends StatelessWidget {
                         elevation: 4,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: ListTile(
-                          // leading: Icon(notification['icon'] as IconData?, color: notification['color'], size: 30),
-                          // // title: Text(
-                          // //   notification['message'],
-                          // //   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                          // // ),
+                          leading: Icon(notification['icon'] as IconData?, color: notification['color'] as Color?, size: 30),
+                          title: Text(
+                            notification['message'] as String,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
                           subtitle: Text(
                             'Date: ${notification['date']}',
                             style: TextStyle(fontSize: 12, color: Colors.grey[600]),

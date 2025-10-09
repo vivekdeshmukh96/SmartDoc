@@ -47,14 +47,14 @@ class StudentProfileTab extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
                       ),
                       const SizedBox(height: 8),
-                      // Chip(
-                      //   label: Text(
-                      //     // currentUser?.role.toString().split('.').last.capitalize() ?? 'N/A',
-                      //     // style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      //   ),
-                      //   backgroundColor: Colors.blueAccent.shade400,
-                      //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      // ),
+                      Chip(
+                        label: Text(
+                          currentUser?.role.toString().split('.').last.capitalize() ?? 'N/A',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        backgroundColor: Colors.blueAccent.shade400,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      ),
                       const SizedBox(height: 30),
                       ListTile(
                         leading: const Icon(Icons.info_outline, color: Colors.blueAccent),
