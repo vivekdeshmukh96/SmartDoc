@@ -63,7 +63,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
     final DocumentScanner documentScanner = DocumentScanner(
       options: DocumentScannerOptions(
         mode: ScannerMode.full,
-        isGalleryImportAllowed: true,
       ),
     );
 

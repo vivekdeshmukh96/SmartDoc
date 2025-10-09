@@ -1,12 +1,7 @@
-
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path/path.dart' as path;
 
 class FilterScreen extends StatefulWidget {
   final File image;
@@ -18,15 +13,14 @@ class FilterScreen extends StatefulWidget {
 }
 
 class _FilterScreenState extends State<FilterScreen> {
-  late img.Image _image;
-  img.Image? _filteredImage;
-  bool _isSaving = false;
+  late File _image;
+  File? _filteredImage;
+  bool _isFiltering = false;
 
   @override
   void initState() {
     super.initState();
-    _image = img.decodeImage(widget.image.readAsBytesSync())!;
-    _filteredImage = _image;
+    _image = widget.image;
   }
 
   @override
@@ -36,8 +30,8 @@ class _FilterScreenState extends State<FilterScreen> {
         title: const Text('Apply Filters'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _isSaving ? null : () => _saveAsPdf(context),
+            icon: const Icon(Icons.done),
+            onPressed: () => Navigator.pop(context, _filteredImage ?? _image),
           ),
         ],
       ),
@@ -46,8 +40,13 @@ class _FilterScreenState extends State<FilterScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (_filteredImage != null)
-              Image.memory(
-                Uint8List.fromList(img.encodeJpg(_filteredImage!)),
+              Image.file(
+                _filteredImage!,
+                height: 300,
+              )
+            else
+              Image.file(
+                _image,
                 height: 300,
               ),
             const SizedBox(height: 20),
@@ -55,109 +54,87 @@ class _FilterScreenState extends State<FilterScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: _applyBlackAndWhiteFilter,
-                  child: const Text('B&W'),
-                ),
-                ElevatedButton(
-                  onPressed: _applyContrastBoost,
+                  onPressed: _applyContrast,
                   child: const Text('Contrast'),
                 ),
                 ElevatedButton(
-                  onPressed: _applyBrightnessAdjustment,
+                  onPressed: _applyBrightness,
                   child: const Text('Brightness'),
+                ),
+                ElevatedButton(
+                  onPressed: _applyGrayscale,
+                  child: const Text('Grayscale'),
                 ),
               ],
             ),
+            if (_isFiltering)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
           ],
         ),
       ),
     );
   }
 
-  void _applyBlackAndWhiteFilter() {
+  Future<void> _applyContrast() async {
     setState(() {
-      _filteredImage = img.grayscale(_image);
+      _isFiltering = true;
     });
-  }
-
-  void _applyContrastBoost() {
-    setState(() {
-      _filteredImage = img.contrast(_image, 150);
-    });
-  }
-
-  void _applyBrightnessAdjustment() {
-    setState(() {
-      _filteredImage = img.brightness(_image, 50);
-    });
-  }
-
-  Future<void> _saveAsPdf(BuildContext context) async {
-    if (_filteredImage == null) return;
-
-    setState(() {
-      _isSaving = true;
-    });
-
-    final pw.Document pdf = pw.Document();
-
-    final pdfImage = pw.MemoryImage(
-      Uint8List.fromList(img.encodeJpg(_filteredImage!)),
-    );
-
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Center(
-            child: pw.Image(pdfImage),
-          );
-        },
-      ),
-    );
-
-    try {
-      final Directory outputDir = await getTemporaryDirectory();
-      final String outputPath = '${outputDir.path}/scanned_document.pdf';
-      final File file = File(outputPath);
-      await file.writeAsBytes(await pdf.save());
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF saved to: $outputPath'),
-        ),
-      );
-
-      await _uploadToFirebase(file);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving PDF: $e'),
-        ),
-      );
-    } finally {
+    final imageBytes = await _image.readAsBytes();
+    final image = img.decodeImage(imageBytes);
+    if (image != null) {
+      final filtered = img.contrast(image, contrast: 150);
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/filtered.jpg');
+      await tempFile.writeAsBytes(img.encodeJpg(filtered));
       setState(() {
-        _isSaving = false;
+        _filteredImage = tempFile;
       });
     }
+    setState(() {
+      _isFiltering = false;
+    });
   }
 
-  Future<void> _uploadToFirebase(File file) async {
-    try {
-      final String fileName = path.basename(file.path);
-      final Reference storageRef = FirebaseStorage.instance.ref().child('scanned_documents/$fileName');
-      await storageRef.putFile(file);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Document uploaded to Firebase Storage'),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error uploading to Firebase: $e'),
-        ),
-      );
+  Future<void> _applyBrightness() async {
+    setState(() {
+      _isFiltering = true;
+    });
+    final imageBytes = await _image.readAsBytes();
+    final image = img.decodeImage(imageBytes);
+    if (image != null) {
+      final filtered = img.brightness(image, brightness: 50);
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/filtered.jpg');
+      await tempFile.writeAsBytes(img.encodeJpg(filtered));
+      setState(() {
+        _filteredImage = tempFile;
+      });
     }
+    setState(() {
+      _isFiltering = false;
+    });
+  }
+
+  Future<void> _applyGrayscale() async {
+    setState(() {
+      _isFiltering = true;
+    });
+    final imageBytes = await _image.readAsBytes();
+    final image = img.decodeImage(imageBytes);
+    if (image != null) {
+      final filtered = img.grayscale(image);
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/filtered.jpg');
+      await tempFile.writeAsBytes(img.encodeJpg(filtered));
+      setState(() {
+        _filteredImage = tempFile;
+      });
+    }
+    setState(() {
+      _isFiltering = false;
+    });
   }
 }
