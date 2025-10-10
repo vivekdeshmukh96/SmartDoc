@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:collegeapplication/screens/filter_screen.dart';
 import 'package:collegeapplication/screens/scanner_screen.dart';
 import 'package:flutter/material.dart';
@@ -30,19 +28,16 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     final prefs = await SharedPreferences.getInstance();
     final imagePath = prefs.getString(_tempImagePathKey);
 
-    if (imagePath != null) {
+    if (imagePath != null && imagePath.isNotEmpty) {
       final imageFile = File(imagePath);
       if (await imageFile.exists()) {
-        // The file exists, read it into bytes and navigate to the FilterScreen.
-        final imageBytes = await imageFile.readAsBytes();
         if (mounted) {
           await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => FilterScreen(
-                imageBytes: imageBytes,
+                imagePath: imagePath,
                 onDispose: () async {
-                  // This callback runs when FilterScreen is disposed.
                   await prefs.remove(_tempImagePathKey);
                   await imageFile.delete();
                 },
@@ -51,7 +46,6 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
           );
         }
       } else {
-        // The file path was saved, but the file no longer exists. Clean up.
         await prefs.remove(_tempImagePathKey);
       }
     }
@@ -62,20 +56,23 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     final imageFile = File(imagePath);
 
     if (await imageFile.exists()) {
-      // Persist the image path in case the app is killed.
       await prefs.setString(_tempImagePathKey, imageFile.path);
 
-      final imageBytes = await imageFile.readAsBytes();
       if (mounted) {
         await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => FilterScreen(
-              imageBytes: imageBytes,
+              imagePath: imagePath,
               onDispose: () async {
-                // This callback runs when FilterScreen is disposed.
                 await prefs.remove(_tempImagePathKey);
-                await imageFile.delete();
+                try {
+                  if (await imageFile.exists()) {
+                    await imageFile.delete();
+                  }
+                } catch (e) {
+                  print('Error deleting temp file: $e');
+                }
               },
             ),
           ),
@@ -94,27 +91,28 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     String? imagePath;
 
     if (source == ImageSource.camera) {
-      // ScannerScreen now returns a file path.
-      final result = await Navigator.push(
+      final result = await Navigator.push<String>(
         context,
         MaterialPageRoute(builder: (context) => const ScannerScreen()),
       );
-      if (result is String) {
+      if (result != null && result.isNotEmpty) {
         imagePath = result;
       }
     } else {
-      // ImagePicker returns a file path.
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: source);
       if (pickedFile != null) {
-        imagePath = pickedFile.path;
+        // To ensure consistency, we copy the gallery image to our temp directory
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await tempFile.writeAsBytes(await pickedFile.readAsBytes());
+        imagePath = tempFile.path;
       }
     }
 
     if (imagePath != null) {
       await _processImageAndNavigate(imagePath);
     } else {
-      // User cancelled the operation.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No image selected or scan cancelled.')),
