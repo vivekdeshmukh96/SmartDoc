@@ -15,6 +15,7 @@ class Document {
   final String? verifiedByUserId;
   final String? verificationDate;
   final String? comments;
+  final String? downloadUrl;
 
   Document({
     required this.id,
@@ -26,7 +27,26 @@ class Document {
     this.verifiedByUserId,
     this.verificationDate,
     this.comments,
+    this.downloadUrl,
   });
+
+  factory Document.fromFirestore(Map<String, dynamic> data, String documentId) {
+    return Document(
+      id: documentId,
+      name: data['name'] ?? '',
+      category: data['category'] ?? '',
+      status: DocumentStatus.values.firstWhere(
+            (e) => e.toString() == 'DocumentStatus.${data['status']}',
+        orElse: () => DocumentStatus.pending,
+      ),
+      uploadedByUserId: data['uploadedByUserId'] ?? '',
+      uploadedDate: data['uploadedDate'] ?? '',
+      verifiedByUserId: data['verifiedByUserId'],
+      verificationDate: data['verificationDate'],
+      comments: data['comments'],
+      downloadUrl: data['downloadUrl'],
+    );
+  }
 
   Document copyWith({
     String? id,
@@ -38,6 +58,7 @@ class Document {
     String? verifiedByUserId,
     String? verificationDate,
     String? comments,
+    String? downloadUrl,
   }) {
     return Document(
       id: id ?? this.id,
@@ -49,6 +70,7 @@ class Document {
       verifiedByUserId: verifiedByUserId ?? this.verifiedByUserId,
       verificationDate: verificationDate ?? this.verificationDate,
       comments: comments ?? this.comments,
+      downloadUrl: downloadUrl ?? this.downloadUrl,
     );
   }
 }
