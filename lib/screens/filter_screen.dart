@@ -1,40 +1,151 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../app_state.dart';
+import '../widgets/message_box.dart';
 
 class FilterScreen extends StatefulWidget {
-  final File image;
-  const FilterScreen({super.key, required this.image});
+  final Uint8List imageBytes;
+  const FilterScreen({super.key, required this.imageBytes});
 
   @override
   State<FilterScreen> createState() => _FilterScreenState();
 }
 
 class _FilterScreenState extends State<FilterScreen> {
-  // In a real implementation, you would apply filters to the image.
-  // For now, we will just display the image and provide a button to confirm.
-  // This screen is a placeholder for your custom filter logic.
+  final TextEditingController _nameController = TextEditingController();
+  String? _selectedCategory;
+  bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _analyzeDocument();
+  }
+
+  Future<void> _analyzeDocument() async {
+    if (widget.imageBytes == null) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final result = await appState.getDocumentAnalysis(widget.imageBytes!);
+      setState(() {
+        _nameController.text = result['name'] ?? '';
+        _selectedCategory = result['category'];
+      });
+    } catch (e) {
+      if (mounted) {
+        showMessageBox(context, 'Error', 'Failed to analyze document: ${e.toString()}');
+      }
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
+
+  void _uploadDocument() async {
+    if (widget.imageBytes == null || _nameController.text.isEmpty || _selectedCategory == null) {
+      showMessageBox(context, 'Error', 'Please select an image, name, and category.');
+      return;
+    }
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      await appState.addDocument(
+        _nameController.text,
+        _selectedCategory!,
+        widget.imageBytes!,
+      );
+      if (mounted) {
+        showMessageBox(context, 'Success', 'Document uploaded for verification.');
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        showMessageBox(context, 'Error', 'Failed to upload document: ${e.toString()}');
+      }
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Apply Filters'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: () {
-              // When the user is done, pop the screen and return the image file.
-              Navigator.of(context).pop(widget.image);
-            },
-          )
-        ],
+        title: const Text('Upload Document'),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Image.file(widget.image),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blueGrey.shade300),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.memory(widget.imageBytes, fit: BoxFit.cover),
+              ),
+            ),
+            const SizedBox(height: 30),
+            _buildDocumentForm(appState),
+            const SizedBox(height: 30),
+            _isProcessing
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton.icon(
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Upload Document'),
+              onPressed: _uploadDocument,
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDocumentForm(AppState appState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _nameController,
+          decoration: const InputDecoration(labelText: 'Document Name'),
+        ),
+        const SizedBox(height: 20),
+        DropdownButtonFormField<String>(
+          value: _selectedCategory,
+          decoration: const InputDecoration(labelText: 'Category'),
+          items: appState.categories.map((category) {
+            return DropdownMenuItem(value: category, child: Text(category));
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedCategory = value;
+            });
+          },
+        ),
+      ],
     );
   }
 }
