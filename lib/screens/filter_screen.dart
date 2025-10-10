@@ -8,7 +8,8 @@ import '../widgets/message_box.dart';
 
 class FilterScreen extends StatefulWidget {
   final Uint8List imageBytes;
-  const FilterScreen({super.key, required this.imageBytes});
+  final VoidCallback? onDispose;
+  const FilterScreen({super.key, required this.imageBytes, this.onDispose});
 
   @override
   State<FilterScreen> createState() => _FilterScreenState();
@@ -23,6 +24,12 @@ class _FilterScreenState extends State<FilterScreen> {
   void initState() {
     super.initState();
     _analyzeDocument();
+  }
+
+  @override
+  void dispose() {
+    widget.onDispose?.call();
+    super.dispose();
   }
 
   Future<void> _analyzeDocument() async {

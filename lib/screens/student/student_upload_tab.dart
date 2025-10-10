@@ -1,6 +1,12 @@
-import 'package:collegeapplication/screens/student/image_capture_screen.dart';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:collegeapplication/screens/filter_screen.dart';
+import 'package:collegeapplication/screens/scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StudentUploadTab extends StatefulWidget {
   const StudentUploadTab({super.key});
@@ -10,14 +16,85 @@ class StudentUploadTab extends StatefulWidget {
 }
 
 class _StudentUploadTabState extends State<StudentUploadTab> {
+  static const _tempImagePathKey = 'temp_image_path';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _recoverAndNavigate();
+    });
+  }
+
+  Future<void> _recoverAndNavigate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final imagePath = prefs.getString(_tempImagePathKey);
+
+    if (imagePath != null) {
+      final imageFile = File(imagePath);
+      if (await imageFile.exists()) {
+        final imageBytes = await imageFile.readAsBytes();
+        if (mounted) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FilterScreen(
+                imageBytes: imageBytes,
+                onDispose: () async {
+                  await prefs.remove(_tempImagePathKey);
+                  await imageFile.delete();
+                },
+              ),
+            ),
+          );
+        }
+      } else {
+        await prefs.remove(_tempImagePathKey);
+      }
+    }
+  }
+
   Future<void> _getImage(ImageSource source) async {
-    if (!mounted) return;
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ImageCaptureScreen(source: source),
-      ),
-    );
+    final prefs = await SharedPreferences.getInstance();
+    Uint8List? imageBytes;
+
+    if (source == ImageSource.camera) {
+      final scannedImageBytes = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ScannerScreen()),
+      );
+      if (scannedImageBytes != null) {
+        imageBytes = scannedImageBytes;
+      }
+    } else {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        imageBytes = await pickedFile.readAsBytes();
+      }
+    }
+
+    if (imageBytes != null) {
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await tempFile.writeAsBytes(imageBytes);
+      await prefs.setString(_tempImagePathKey, tempFile.path);
+
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FilterScreen(
+              imageBytes: imageBytes!,
+              onDispose: () async {
+                await prefs.remove(_tempImagePathKey);
+                await tempFile.delete();
+              },
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
