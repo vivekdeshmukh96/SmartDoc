@@ -21,7 +21,7 @@ class AdminAnalyticsTab extends StatelessWidget {
         }
 
         final documents = snapshot.data!.docs
-            .map((doc) => Document.fromFirestore(doc))
+            .map((doc) => Document.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
             .toList();
 
         final totalDocs = documents.length;

@@ -9,6 +9,8 @@ class DocumentDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final comments = document.comments;
+
     return Scaffold(
       appBar: AppBar(title: Text(document.name)),
       body: Padding(
@@ -18,8 +20,8 @@ class DocumentDetailScreen extends StatelessWidget {
           children: [
             Text('Status: ${document.status.name.capitalize()}', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
-            if (document.comments != null && document.comments!.isNotEmpty)
-              Text('Comments: ${document.comments!}', style: Theme.of(context).textTheme.titleMedium),
+            if (comments != null && comments.isNotEmpty)
+              Text('Comments: $comments', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 16),
             Expanded(
               child: InteractiveViewer(

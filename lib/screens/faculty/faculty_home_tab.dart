@@ -51,7 +51,8 @@ class FacultyHomeTab extends StatelessWidget {
                 return ListView.builder(
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    final doc = Document.fromFirestore(snapshot.data!.docs[index]);
+                    final docData = snapshot.data!.docs[index];
+                    final doc = Document.fromFirestore(docData.data() as Map<String, dynamic>, docData.id);
 
                     return FutureBuilder<DocumentSnapshot>(
                       future: FirebaseFirestore.instance.collection('users').doc(doc.uploadedByUserId).get(),

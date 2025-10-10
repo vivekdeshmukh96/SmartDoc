@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/role.dart';
 
 class User {
@@ -18,40 +17,42 @@ class User {
     this.className,
   });
 
-  // fromMap method to create a User object from a map (e.g., from Firestore)
-  factory User.fromMap(Map<String, dynamic> map) {
+  factory User.fromFirestore(Map<String, dynamic> data, String id) {
     return User(
-      id: map['id'],
-      name: map['name'],
-      email: map['email'],
-      role: Role.values.firstWhere((e) => e.toString() == 'Role.' + map['role']),
-      rollNumber: map['rollNumber'],
-      className: map['className'],
-    );
-  }
-
-  // fromFirestore method to create a User object from a Firestore document
-  factory User.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    return User(
-      id: doc.id,
+      id: id,
       name: data['name'],
       email: data['email'],
-      role: Role.values.firstWhere((e) => e.toString() == 'Role.${data['role']}'),
+      role: Role.values.firstWhere((e) => e.name == data['role']),
       rollNumber: data['rollNumber'],
       className: data['className'],
     );
   }
 
-  // toMap method to convert a User object to a map
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'name': name,
       'email': email,
-      'role': role.toString().split('.').last,
+      'role': role.name,
       'rollNumber': rollNumber,
       'className': className,
     };
+  }
+
+  User copyWith({
+    String? id,
+    String? name,
+    String? email,
+    Role? role,
+    String? rollNumber,
+    String? className,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      rollNumber: rollNumber ?? this.rollNumber,
+      className: className ?? this.className,
+    );
   }
 }

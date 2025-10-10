@@ -48,7 +48,7 @@ class StudentHomeTab extends StatelessWidget {
                   );
                 }
 
-                final documents = snapshot.data!.docs.map((doc) => Document.fromFirestore(doc)).toList();
+                final documents = snapshot.data!.docs.map((doc) => Document.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
 
                 return ListView.builder(
                   itemCount: documents.length,

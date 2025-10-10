@@ -1,44 +1,66 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:collegeapplication/models/user.dart' as AppUser;
 
-import '../../app_state.dart';
-import '../../models/user.dart';
 import '../../utils/string_extensions.dart';
 
 class StudentProfileTab extends StatelessWidget {
   const StudentProfileTab({super.key});
 
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    // After logout, you might want to navigate to the login screen
+    // or some other initial screen of your app.
+  }
+
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
-    final currentUser = appState.currentUser;
+    final currentUserAuth = FirebaseAuth.instance.currentUser;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildProfileHeader(context, currentUser),
-          const SizedBox(height: 30),
-          _buildProfileInfoCard(currentUser),
-          const SizedBox(height: 30),
-          ElevatedButton(
-            onPressed: () {
-              appState.logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            child: const Text('Logout', style: TextStyle(fontSize: 18)),
+    if (currentUserAuth == null) {
+      // Handle the case where the user is not logged in
+      return const Center(child: Text('Not logged in.'));
+    }
+
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('users').doc(currentUserAuth.uid).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          return const Center(child: Text('Error fetching user data.'));
+        }
+
+        final currentUser = AppUser.User.fromFirestore(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildProfileHeader(context, currentUser),
+              const SizedBox(height: 30),
+              _buildProfileInfoCard(currentUser),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () => _logout(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text('Logout', style: TextStyle(fontSize: 18)),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context, User? currentUser) {
+  Widget _buildProfileHeader(BuildContext context, AppUser.User? currentUser) {
     return Column(
       children: [
         const CircleAvatar(
@@ -60,7 +82,7 @@ class StudentProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileInfoCard(User? currentUser) {
+  Widget _buildProfileInfoCard(AppUser.User? currentUser) {
     return Card(
       elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

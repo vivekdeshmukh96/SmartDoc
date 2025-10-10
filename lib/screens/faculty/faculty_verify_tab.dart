@@ -220,7 +220,7 @@ Widget build(BuildContext context) {
               }
 
               var documents = snapshot.data!.docs
-                  .map((doc) => Document.fromFirestore(doc))
+                  .map((doc) => Document.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
                   .where((doc) {
                     final matchesCategory = _selectedCategoryFilter == null || doc.category == _selectedCategoryFilter;
                     final matchesStatus = _selectedStatusFilter == null || doc.status == _selectedStatusFilter;
