@@ -33,6 +33,7 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     if (imagePath != null) {
       final imageFile = File(imagePath);
       if (await imageFile.exists()) {
+        // The file exists, read it into bytes and navigate to the FilterScreen.
         final imageBytes = await imageFile.readAsBytes();
         if (mounted) {
           await Navigator.push(
@@ -41,6 +42,7 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
               builder: (context) => FilterScreen(
                 imageBytes: imageBytes,
                 onDispose: () async {
+                  // This callback runs when FilterScreen is disposed.
                   await prefs.remove(_tempImagePathKey);
                   await imageFile.delete();
                 },
@@ -49,54 +51,70 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
           );
         }
       } else {
+        // The file path was saved, but the file no longer exists. Clean up.
         await prefs.remove(_tempImagePathKey);
       }
     }
   }
 
-  Future<void> _getImage(ImageSource source) async {
+  Future<void> _processImageAndNavigate(String imagePath) async {
     final prefs = await SharedPreferences.getInstance();
-    Uint8List? imageBytes;
+    final imageFile = File(imagePath);
 
-    if (source == ImageSource.camera) {
-      final scannedImageBytes = await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ScannerScreen()),
-      );
-      if (scannedImageBytes != null) {
-        imageBytes = scannedImageBytes;
-      }
-    } else {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: source);
-      if (pickedFile != null) {
-        imageBytes = await pickedFile.readAsBytes();
-      }
-    }
+    if (await imageFile.exists()) {
+      // Persist the image path in case the app is killed.
+      await prefs.setString(_tempImagePathKey, imageFile.path);
 
-    if (imageBytes != null) {
-      final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
-      await tempFile.writeAsBytes(imageBytes);
-      await prefs.setString(_tempImagePathKey, tempFile.path);
-
+      final imageBytes = await imageFile.readAsBytes();
       if (mounted) {
         await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => FilterScreen(
-              imageBytes: imageBytes!,
+              imageBytes: imageBytes,
               onDispose: () async {
+                // This callback runs when FilterScreen is disposed.
                 await prefs.remove(_tempImagePathKey);
-                await tempFile.delete();
+                await imageFile.delete();
               },
             ),
           ),
         );
       }
     } else {
-      // If no imageBytes, it means the user cancelled the scan/gallery pick or there was an error.
-      // Do not navigate to FilterScreen.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: Image file not found.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _getImage(ImageSource source) async {
+    String? imagePath;
+
+    if (source == ImageSource.camera) {
+      // ScannerScreen now returns a file path.
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ScannerScreen()),
+      );
+      if (result is String) {
+        imagePath = result;
+      }
+    } else {
+      // ImagePicker returns a file path.
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        imagePath = pickedFile.path;
+      }
+    }
+
+    if (imagePath != null) {
+      await _processImageAndNavigate(imagePath);
+    } else {
+      // User cancelled the operation.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No image selected or scan cancelled.')),
