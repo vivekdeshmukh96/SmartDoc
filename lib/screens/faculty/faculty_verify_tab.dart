@@ -1,10 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collegeapplication/models/document.dart';
+import 'package:collegeapplication/utils/string_extensions.dart';
+import 'package:collegeapplication/widgets/document_card.dart';
+import 'package:collegeapplication/widgets/message_box.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../../app_state.dart';
-import '../../models/document.dart';
-import '../../widgets/document_card.dart';
-import '../../widgets/message_box.dart';
 
 class FacultyVerifyTab extends StatefulWidget {
   const FacultyVerifyTab({super.key});
@@ -17,17 +17,6 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
   String? _selectedCategoryFilter;
   DocumentStatus? _selectedStatusFilter;
   final TextEditingController _searchController = TextEditingController();
-  String _searchText = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() {
-      setState(() {
-        _searchText = _searchController.text;
-      });
-    });
-  }
 
   @override
   void dispose() {
@@ -35,9 +24,9 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
     super.dispose();
   }
 
-  void _showVerificationModal(BuildContext context, Document doc, AppState appState) {
+  void _showVerificationModal(BuildContext context, Document doc) {
     final TextEditingController commentsController = TextEditingController(text: doc.comments);
-    final currentUser = appState.currentUser;
+    final currentUser = FirebaseAuth.instance.currentUser;
 
     showDialog(
       context: context,
@@ -58,7 +47,15 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
                 const SizedBox(height: 8),
                 Text('Category: ${doc.category}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
                 const SizedBox(height: 8),
-                Text('Uploaded By: ${appState.users.firstWhere((user) => user.id == doc.uploadedByUserId).name}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').doc(doc.uploadedByUserId).get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Text('Uploaded By: Loading...', style: TextStyle(fontSize: 14, color: Colors.grey));
+                    }
+                    return Text('Uploaded By: ${snapshot.data?['name'] ?? 'N/A'}', style: const TextStyle(fontSize: 14, color: Colors.grey));
+                  },
+                ),
                 const SizedBox(height: 8),
                 Text('Current Status: ${doc.status.toString().split('.').last.capitalize()}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
                 const SizedBox(height: 16),
@@ -81,8 +78,12 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      appState.updateDocumentStatus(doc.id, DocumentStatus.approved,
-                          comments: commentsController.text, verifiedByUserId: currentUser?.id);
+                      FirebaseFirestore.instance.collection('documents').doc(doc.id).update({
+                        'status': DocumentStatus.approved.name,
+                        'comments': commentsController.text,
+                        'verifiedByUserId': currentUser?.uid,
+                        'verificationDate': DateTime.now().toIso8601String(),
+                      });
                       Navigator.of(context).pop();
                       showMessageBox(context, 'Success', 'Document approved.');
                     },
@@ -99,8 +100,12 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      appState.updateDocumentStatus(doc.id, DocumentStatus.rejected,
-                          comments: commentsController.text, verifiedByUserId: currentUser?.id);
+                      FirebaseFirestore.instance.collection('documents').doc(doc.id).update({
+                        'status': DocumentStatus.rejected.name,
+                        'comments': commentsController.text,
+                        'verifiedByUserId': currentUser?.uid,
+                        'verificationDate': DateTime.now().toIso8601String(),
+                      });
                       Navigator.of(context).pop();
                       showMessageBox(context, 'Success', 'Document rejected.');
                     },
@@ -127,93 +132,106 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, appState, child) {
-        final allDocuments = appState.documents;
-
-        final filteredDocuments = allDocuments.where((doc) {
-          final matchesCategory = _selectedCategoryFilter == null || doc.category == _selectedCategoryFilter;
-          final matchesStatus = _selectedStatusFilter == null || doc.status == _selectedStatusFilter;
-          final matchesSearch = _searchText.isEmpty ||
-              doc.name.toLowerCase().contains(_searchText.toLowerCase()) ||
-              appState.users.firstWhere((user) => user.id == doc.uploadedByUserId).name.toLowerCase().contains(_searchText.toLowerCase()) ||
-              doc.id.toLowerCase().contains(_searchText.toLowerCase()); // Search by ID
-
-          return matchesCategory && matchesStatus && matchesSearch;
-        }).toList();
-
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Verify Documents',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+ @override
+Widget build(BuildContext context) {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Verify Documents',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            labelText: 'Search by Name or Student ID',
+            prefixIcon: const Icon(Icons.search),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onChanged: (value) => setState(() {}),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('categories').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const CircularProgressIndicator();
+                  var categories = snapshot.data!.docs.map((doc) => doc['name'] as String).toList();
+                  return DropdownButtonFormField<String>(
+                    value: _selectedCategoryFilter,
+                    decoration: InputDecoration(
+                      labelText: 'Filter by Category',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    hint: const Text('All Categories'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('All Categories')),
+                      ...categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCategoryFilter = value;
+                      });
+                    },
+                  );
+                },
               ),
-              const SizedBox(height: 16),
-              // Search and Filter
-              TextField(
-                controller: _searchController,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: DropdownButtonFormField<DocumentStatus>(
+                value: _selectedStatusFilter,
                 decoration: InputDecoration(
-                  labelText: 'Search by Name or Student ID',
-                  prefixIcon: const Icon(Icons.search),
+                  labelText: 'Filter by Status',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedCategoryFilter,
-                      decoration: InputDecoration(
-                        labelText: 'Filter by Category',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      hint: const Text('All Categories'),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('All Categories')),
-                        ...appState.categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedCategoryFilter = value;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: DropdownButtonFormField<DocumentStatus>(
-                      value: _selectedStatusFilter,
-                      decoration: InputDecoration(
-                        labelText: 'Filter by Status',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      hint: const Text('All Statuses'),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('All Statuses')),
-                        ...DocumentStatus.values.map((status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(status.toString().split('.').last.capitalize()),
-                        )),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedStatusFilter = value;
-                        });
-                      },
-                    ),
-                  ),
+                hint: const Text('All Statuses'),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('All Statuses')),
+                  ...DocumentStatus.values.map((status) => DropdownMenuItem(
+                        value: status,
+                        child: Text(status.name.capitalize()),
+                      )),
                 ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedStatusFilter = value;
+                  });
+                },
               ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: filteredDocuments.isEmpty
-                    ? Center(
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('documents').snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData) {
+                return const Center(child: Text('No documents found.'));
+              }
+
+              var documents = snapshot.data!.docs
+                  .map((doc) => Document.fromFirestore(doc))
+                  .where((doc) {
+                    final matchesCategory = _selectedCategoryFilter == null || doc.category == _selectedCategoryFilter;
+                    final matchesStatus = _selectedStatusFilter == null || doc.status == _selectedStatusFilter;
+                    final matchesSearch = _searchController.text.isEmpty ||
+                        doc.name.toLowerCase().contains(_searchController.text.toLowerCase()) ||
+                        doc.uploadedByUserId.toLowerCase().contains(_searchController.text.toLowerCase());
+                    return matchesCategory && matchesStatus && matchesSearch;
+                  }).toList();
+
+              if (documents.isEmpty) {
+                return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -226,39 +244,40 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
                       ),
                     ],
                   ),
-                )
-                    : ListView.builder(
-                  itemCount: filteredDocuments.length,
-                  itemBuilder: (context, index) {
-                    final doc = filteredDocuments[index];
-                    final uploadedBy = appState.users.firstWhere((user) => user.id == doc.uploadedByUserId).name;
-                    return DocumentCard(
-                      document: doc,
-                      subtitle: 'Uploaded by: $uploadedBy on ${doc.uploadedDate}',
-                      trailing: ElevatedButton(
-                        onPressed: () => _showVerificationModal(context, doc, appState),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          textStyle: const TextStyle(fontSize: 14),
-                        ),
-                        child: const Text('Review'),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
+                );
+              }
 
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
-  }
+              return ListView.builder(
+                itemCount: documents.length,
+                itemBuilder: (context, index) {
+                  final doc = documents[index];
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance.collection('users').doc(doc.uploadedByUserId).get(),
+                    builder: (context, userSnapshot) {
+                      final uploadedBy = userSnapshot.data?['name'] ?? 'Loading...';
+                      return DocumentCard(
+                        document: doc,
+                        subtitle: 'Uploaded by: $uploadedBy on ${doc.uploadedDate}',
+                        trailing: ElevatedButton(
+                          onPressed: () => _showVerificationModal(context, doc),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            textStyle: const TextStyle(fontSize: 14),
+                          ),
+                          child: const Text('Review'),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }

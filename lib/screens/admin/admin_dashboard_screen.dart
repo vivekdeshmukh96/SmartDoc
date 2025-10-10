@@ -1,7 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import '../../app_state.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import 'admin_analytics_tab.dart';
@@ -18,22 +18,38 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0;
+  String? _userName;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserName();
+  }
+
+  Future<void> _fetchUserName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        setState(() {
+          _userName = userDoc.data()!['name'];
+        });
+      }
+    }
+  }
+
+  final List<Widget> _widgetOptions = <Widget>[
+    const AdminHomeTab(),
+    const AdminUsersTab(),
+    const AdminCategoriesTab(),
+    const AdminAnalyticsTab(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
-    final String userName = appState.currentUser?.name ?? 'Admin';
-
-    final List<Widget> _widgetOptions = <Widget>[
-      AdminHomeTab(),
-      AdminUsersTab(),
-      AdminCategoriesTab(),
-      AdminAnalyticsTab(),
-    ];
-
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Welcome, $userName!',
+        title: 'Welcome, ${_userName ?? 'Admin'}!',
         showLogout: true,
       ),
       body: _widgetOptions.elementAt(_selectedIndex),

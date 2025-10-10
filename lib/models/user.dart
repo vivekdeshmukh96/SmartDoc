@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/role.dart';
 
 class User {
@@ -26,6 +27,19 @@ class User {
       role: Role.values.firstWhere((e) => e.toString() == 'Role.' + map['role']),
       rollNumber: map['rollNumber'],
       className: map['className'],
+    );
+  }
+
+  // fromFirestore method to create a User object from a Firestore document
+  factory User.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    return User(
+      id: doc.id,
+      name: data['name'],
+      email: data['email'],
+      role: Role.values.firstWhere((e) => e.toString() == 'Role.${data['role']}'),
+      rollNumber: data['rollNumber'],
+      className: data['className'],
     );
   }
 

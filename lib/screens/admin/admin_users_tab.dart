@@ -1,11 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/role.dart';
+import 'package:collegeapplication/utils/string_extensions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import '../../app_state.dart';
-import '../../models/user.dart';
 import '../../widgets/message_box.dart';
-import '../../utils/string_extensions.dart';
 
 class AdminUsersTab extends StatefulWidget {
   const AdminUsersTab({super.key});
@@ -28,11 +27,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     super.dispose();
   }
 
-  void _showAddUserModal(BuildContext context, AppState appState) {
+  void _showAddUserModal(BuildContext context) {
     _nameController.clear();
     _emailController.clear();
     _passwordController.clear();
-    _selectedRole = null;
+    setState(() {
+      _selectedRole = null;
+    });
 
     showDialog(
       context: context,
@@ -87,7 +88,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_nameController.text.isEmpty ||
                     _emailController.text.isEmpty ||
                     _passwordController.text.isEmpty ||
@@ -96,16 +97,21 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   return;
                 }
                 try {
-                  appState.addUser(
-                    _nameController.text,
-                    _emailController.text,
-                    _passwordController.text,
-                    _selectedRole!,
+                  UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                    email: _emailController.text,
+                    password: _passwordController.text,
                   );
+                  await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+                    'name': _nameController.text,
+                    'email': _emailController.text,
+                    'role': _selectedRole.toString().split('.').last,
+                  });
                   Navigator.of(context).pop();
                   showMessageBox(context, 'Success', 'User added successfully.');
+                } on FirebaseAuthException catch (e) {
+                  showMessageBox(context, 'Error', e.message ?? 'An unknown error occurred.');
                 } catch (e) {
-                  showMessageBox(context, 'Error', e.toString().replaceFirst('Exception: ', ''));
+                  showMessageBox(context, 'Error', e.toString());
                 }
               },
               child: const Text('Add User'),
@@ -116,14 +122,14 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     );
   }
 
-  void _confirmDeleteUser(BuildContext context, AppState appState, User user) {
+  void _confirmDeleteUser(BuildContext context, String userId, String userName) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
           title: const Text('Confirm Deletion', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text('Are you sure you want to delete user "${user.name}" (${user.email})?'),
+          content: Text('Are you sure you want to delete user "$userName"?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -132,13 +138,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 try {
-                  appState.removeUser(user.id);
+                  await FirebaseFirestore.instance.collection('users').doc(userId).delete();
                   Navigator.of(context).pop();
                   showMessageBox(context, 'Success', 'User deleted successfully.');
                 } catch (e) {
-                  showMessageBox(context, 'Error', e.toString().replaceFirst('Exception: ', ''));
+                  showMessageBox(context, 'Error', e.toString());
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -152,51 +158,64 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, appState, child) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Manage Users',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _showAddUserModal(context, appState),
-                    icon: const Icon(Icons.person_add),
-                    label: const Text('Add User'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
+              Text(
+                'Manage Users',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: appState.users.isEmpty
-                    ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.group_off, size: 80, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No users registered.',
-                        style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                )
-                    : ListView.builder(
-                  itemCount: appState.users.length,
+              ElevatedButton.icon(
+                onPressed: () => _showAddUserModal(context),
+                icon: const Icon(Icons.person_add),
+                label: const Text('Add User'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('users').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.group_off, size: 80, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No users registered.',
+                          style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    final user = appState.users[index];
+                    final doc = snapshot.data!.docs[index];
+                    final user = (
+                      id: doc.id,
+                      name: doc['name'],
+                      email: doc['email'],
+                      role: Role.values.firstWhere((e) => e.toString() == 'Role.${doc['role']}'),
+                    );
+
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 8),
                       elevation: 2,
@@ -206,19 +225,19 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                           backgroundColor: user.role == Role.student
                               ? Colors.blue.shade100
                               : user.role == Role.faculty
-                              ? Colors.orange.shade100
-                              : Colors.red.shade100,
+                                  ? Colors.orange.shade100
+                                  : Colors.red.shade100,
                           child: Icon(
                             user.role == Role.student
                                 ? Icons.school
                                 : user.role == Role.faculty
-                                ? Icons.person_outline
-                                : Icons.admin_panel_settings,
+                                    ? Icons.person_outline
+                                    : Icons.admin_panel_settings,
                             color: user.role == Role.student
                                 ? Colors.blue
                                 : user.role == Role.faculty
-                                ? Colors.orange
-                                : Colors.red,
+                                    ? Colors.orange
+                                    : Colors.red,
                           ),
                         ),
                         title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -226,17 +245,17 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                         isThreeLine: true,
                         trailing: IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _confirmDeleteUser(context, appState, user),
+                          onPressed: () => _confirmDeleteUser(context, user.id, user.name),
                         ),
                       ),
                     );
                   },
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

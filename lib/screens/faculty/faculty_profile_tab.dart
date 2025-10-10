@@ -1,16 +1,31 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/screens/role_selection_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../app_state.dart';
 
 class FacultyProfileTab extends StatelessWidget {
   const FacultyProfileTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, appState, child) {
-        final currentUser = appState.currentUser;
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      // This should not happen if the user is authenticated, but as a fallback:
+      return const Center(child: Text('Not logged in.'));
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(currentUser.uid).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Center(child: Text('User data not found.'));
+        }
+
+        final userData = snapshot.data!.data() as Map<String, dynamic>;
 
         return Padding(
           padding: const EdgeInsets.all(16.0),
@@ -36,19 +51,19 @@ class FacultyProfileTab extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        currentUser?.name ?? 'N/A',
+                        userData['name'] ?? 'N/A',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        currentUser?.email ?? 'N/A',
+                        currentUser.email ?? 'N/A',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
                       ),
                       const SizedBox(height: 30),
                       ListTile(
                         leading: const Icon(Icons.info_outline, color: Colors.orangeAccent),
                         title: const Text('User ID'),
-                        subtitle: Text(currentUser?.id ?? 'N/A'),
+                        subtitle: Text(currentUser.uid),
                       ),
                     ],
                   ),
@@ -57,12 +72,12 @@ class FacultyProfileTab extends StatelessWidget {
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    appState.logout();
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => RoleSelectionScreen()),
-                          (Route<dynamic> route) => false,
+                      MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+                      (Route<dynamic> route) => false,
                     );
                   },
                   icon: const Icon(Icons.logout),

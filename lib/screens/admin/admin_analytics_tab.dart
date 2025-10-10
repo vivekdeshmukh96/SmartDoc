@@ -1,21 +1,45 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collegeapplication/models/document.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../../app_state.dart';
-import '../../models/document.dart';
 
 class AdminAnalyticsTab extends StatelessWidget {
   const AdminAnalyticsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, appState, child) {
-        final totalDocs = appState.getTotalDocuments();
-        final approvedDocs = appState.getDocumentsByStatus(DocumentStatus.approved);
-        final rejectedDocs = appState.getDocumentsByStatus(DocumentStatus.rejected);
-        final pendingDocs = appState.getDocumentsByStatus(DocumentStatus.pending);
-        final docsByCategory = appState.getDocumentsByCategory();
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('documents').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No documents found.'));
+        }
+
+        final documents = snapshot.data!.docs
+            .map((doc) => Document.fromFirestore(doc))
+            .toList();
+
+        final totalDocs = documents.length;
+        final approvedDocs = documents
+            .where((doc) => doc.status == DocumentStatus.approved)
+            .length;
+        final rejectedDocs = documents
+            .where((doc) => doc.status == DocumentStatus.rejected)
+            .length;
+        final pendingDocs = documents
+            .where((doc) => doc.status == DocumentStatus.pending)
+            .length;
+
+        final Map<String, int> docsByCategory = {};
+        for (var doc in documents) {
+          docsByCategory.update(doc.category, (value) => value + 1,
+              ifAbsent: () => 1);
+        }
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -41,10 +65,10 @@ class AdminAnalyticsTab extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const Divider(height: 20, thickness: 1),
-                      _buildAnalyticRow('Total Documents:', totalDocs.toString()),
-                      _buildAnalyticRow('Approved:', approvedDocs.toString(), color: Colors.green),
-                      _buildAnalyticRow('Rejected:', rejectedDocs.toString(), color: Colors.red),
-                      _buildAnalyticRow('Pending:', pendingDocs.toString(), color: Colors.orange),
+                      _buildAnalyticRow(context, 'Total Documents:', totalDocs.toString()),
+                      _buildAnalyticRow(context, 'Approved:', approvedDocs.toString(), color: Colors.green),
+                      _buildAnalyticRow(context, 'Rejected:', rejectedDocs.toString(), color: Colors.red),
+                      _buildAnalyticRow(context, 'Pending:', pendingDocs.toString(), color: Colors.orange),
                     ],
                   ),
                 ),
@@ -68,6 +92,7 @@ class AdminAnalyticsTab extends StatelessWidget {
                         const Text('No categories with documents yet.', style: TextStyle(color: Colors.grey))
                       else
                         ...docsByCategory.entries.map((entry) => _buildAnalyticRow(
+                          context,
                           '${entry.key}:',
                           entry.value.toString(),
                         )),
@@ -115,23 +140,23 @@ class AdminAnalyticsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildAnalyticRow(String label, String value, {Color? color}) {
+  Widget _buildAnalyticRow(BuildContext context, String label, String value, {Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Text(
-          //   label,
-          //   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
-          // ),
-          // Text(
-          //   value,
-          //   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          //     fontWeight: FontWeight.bold,
-          //     color: color ?? Colors.blueGrey.shade800,
-          //   ),
-          // ),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
+          ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color ?? Colors.blueGrey.shade800,
+            ),
+          ),
         ],
       ),
     );

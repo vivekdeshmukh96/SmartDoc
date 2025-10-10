@@ -1,21 +1,40 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collegeapplication/models/document.dart';
+import 'package:collegeapplication/widgets/status_badge.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../../app_state.dart';
-import '../../models/document.dart';
-import '../../widgets/status_badge.dart';
 
 class AdminHomeTab extends StatelessWidget {
   const AdminHomeTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, appState, child) {
-        final totalDocs = appState.getTotalDocuments();
-        final approvedDocs = appState.getDocumentsByStatus(DocumentStatus.approved);
-        final rejectedDocs = appState.getDocumentsByStatus(DocumentStatus.rejected);
-        final pendingDocs = appState.getDocumentsByStatus(DocumentStatus.pending);
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('documents').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No documents found.'));
+        }
+
+        final documents = snapshot.data!.docs
+            .map((doc) => Document.fromFirestore(doc))
+            .toList();
+
+        final totalDocs = documents.length;
+        final approvedDocs = documents
+            .where((doc) => doc.status == DocumentStatus.approved)
+            .length;
+        final rejectedDocs = documents
+            .where((doc) => doc.status == DocumentStatus.rejected)
+            .length;
+        final pendingDocs = documents
+            .where((doc) => doc.status == DocumentStatus.pending)
+            .length;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -37,7 +56,7 @@ class AdminHomeTab extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              if (appState.documents.isEmpty)
+              if (documents.isEmpty)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 20.0),
@@ -51,60 +70,81 @@ class AdminHomeTab extends StatelessWidget {
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: appState.documents.length,
+                  itemCount: documents.length,
                   itemBuilder: (context, index) {
-                    final doc = appState.documents[index];
-                    final uploadedBy = appState.users.firstWhere((user) => user.id == doc.uploadedByUserId).name;
-                    final verifiedBy = doc.verifiedByUserId != null
-                        ? appState.users.firstWhere((user) => user.id == doc.verifiedByUserId!).name
-                        : 'N/A';
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              doc.name,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Category: ${doc.category}',
-                              style: const TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
+                    final doc = documents[index];
+                    return FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance.collection('users').doc(doc.uploadedByUserId).get(),
+                      builder: (context, userSnapshot) {
+                        if (userSnapshot.connectionState == ConnectionState.waiting) {
+                          return const ListTile(title: Text('Loading...'));
+                        }
+                        if (!userSnapshot.hasData) {
+                          return const ListTile(title: Text('User not found'));
+                        }
+                        final uploadedBy = userSnapshot.data!['name'];
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Status: ', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                                StatusBadge(status: doc.status),
+                                Text(
+                                  doc.name,
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Category: ${doc.category}',
+                                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Text('Status: ', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                                    StatusBadge(status: doc.status),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Uploaded by: $uploadedBy on ${doc.uploadedDate}',
+                                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                ),
+                                if (doc.verifiedByUserId != null) ...[
+                                  const SizedBox(height: 4),
+                                  FutureBuilder<DocumentSnapshot>(
+                                    future: FirebaseFirestore.instance.collection('users').doc(doc.verifiedByUserId!).get(),
+                                    builder: (context, verifiedBySnapshot) {
+                                      if (verifiedBySnapshot.connectionState == ConnectionState.waiting) {
+                                        return const Text('Loading...', style: TextStyle(fontSize: 14, color: Colors.grey));
+                                      }
+                                      if (!verifiedBySnapshot.hasData) {
+                                        return const Text('N/A', style: TextStyle(fontSize: 14, color: Colors.grey));
+                                      }
+                                      final verifiedBy = verifiedBySnapshot.data!['name'];
+                                      return Text(
+                                        'Verified by: $verifiedBy on ${doc.verificationDate}',
+                                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                      );
+                                    },
+                                  ),
+                                ],
+                                if (doc.comments != null && doc.comments!.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Comments: ${doc.comments}',
+                                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                  ),
+                                ],
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Uploaded by: $uploadedBy on ${doc.uploadedDate}',
-                              style: const TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                            if (doc.verifiedByUserId != null) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Verified by: $verifiedBy on ${doc.verificationDate}',
-                                style: const TextStyle(fontSize: 14, color: Colors.grey),
-                              ),
-                            ],
-                            if (doc.comments != null && doc.comments!.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Comments: ${doc.comments}',
-                                style: const TextStyle(fontSize: 14, color: Colors.grey),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

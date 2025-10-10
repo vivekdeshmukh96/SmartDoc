@@ -1,13 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/role.dart';
 import 'package:collegeapplication/screens/student/registration_screen.dart';
+import 'package:collegeapplication/widgets/message_box.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../app_state.dart';
-import '../models/user.dart';
-import '../widgets/message_box.dart';
-import 'common/auth_wrapper.dart';
 import '../utils/string_extensions.dart';
+import 'common/auth_wrapper.dart';
+
 
 class LoginScreen extends StatefulWidget {
   final Role role;
@@ -21,6 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void dispose() {
@@ -40,10 +41,22 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final appState = Provider.of<AppState>(context, listen: false);
-      await appState.login(_emailController.text, _passwordController.text);
+      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
 
-      if (appState.currentUser!.role.toString().split('.').last != widget.role.toString().split('.').last) {
+      final DocumentSnapshot userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+
+      if (!userDoc.exists) {
+        throw Exception('User data not found.');
+      }
+
+      final String userRoleStr = userDoc['role'];
+      final Role userRole = Role.values.firstWhere((e) => e.toString() == 'Role.$userRoleStr');
+
+      if (userRole != widget.role) {
+        await _auth.signOut();
         throw Exception('Selected role does not match user account role.');
       }
 
@@ -53,7 +66,21 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (context) => const AuthWrapper()),
         );
       }
-    } catch (e) {
+
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String errorMessage = 'An unknown error occurred.';
+        if (e.code == 'user-not-found') {
+          errorMessage = 'No user found for that email.';
+        } else if (e.code == 'wrong-password') {
+          errorMessage = 'Wrong password provided for that user.';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'The email address is not valid.';
+        }
+        showMessageBox(context, 'Login Failed', errorMessage);
+      }
+    }
+    catch (e) {
       if (mounted) {
         showMessageBox(context, 'Login Failed', e.toString().replaceFirst('Exception: ', ''));
       }
@@ -118,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
                       decoration: const InputDecoration(
                         labelText: 'Password',
-                        hintText: 'password', // For simulation
+                        hintText: 'password', 
                         prefixIcon: Icon(Icons.lock),
                       ),
                     ),
@@ -141,7 +168,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     TextButton(
                       onPressed: () {
-                        // TODO: Implement Forgot Password
                         showMessageBox(context, 'Feature', 'Forgot Password not implemented in prototype.');
                       },
                       child: const Text('Forgot Password?'),
