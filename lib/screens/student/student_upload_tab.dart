@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'package:collegeapplication/screens/filter_screen.dart';
+import 'package:collegeapplication/screens/scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -19,15 +21,36 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
   String? _selectedCategory;
   bool _isProcessing = false;
 
-  Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
-    if (pickedFile != null) {
-      final bytes = await pickedFile.readAsBytes();
-      setState(() {
-        _imageBytes = bytes;
-      });
-      _analyzeDocument();
+  Future<void> _getImage(ImageSource source) async {
+    if (source == ImageSource.camera) {
+      final scannedImage = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ScannerScreen()),
+      );
+      if (scannedImage != null) {
+        final filteredImage = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FilterScreen(imageBytes: scannedImage),
+          ),
+        );
+        if (filteredImage != null) {
+          setState(() {
+            _imageBytes = filteredImage;
+          });
+          _analyzeDocument();
+        }
+      }
+    } else {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _imageBytes = bytes;
+        });
+        _analyzeDocument();
+      }
     }
   }
 
@@ -145,14 +168,14 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
           children: [
             ElevatedButton.icon(
               icon: const Icon(Icons.camera_alt),
-              label: const Text('Camera'),
-              onPressed: () => _pickImage(ImageSource.camera),
+              label: const Text('Scan Document'),
+              onPressed: () => _getImage(ImageSource.camera),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.indigoAccent),
             ),
             ElevatedButton.icon(
               icon: const Icon(Icons.photo_library),
-              label: const Text('Gallery'),
-              onPressed: () => _pickImage(ImageSource.gallery),
+              label: const Text('Upload from Gallery'),
+              onPressed: () => _getImage(ImageSource.gallery),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
             ),
           ],
