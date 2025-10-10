@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:provider/provider.dart';
 
 import '../app_state.dart';
@@ -57,6 +60,25 @@ class _FilterScreenState extends State<FilterScreen> {
     }
   }
 
+  Future<File> _createPdfFromImage(Uint8List imageBytes) async {
+    final pdf = pw.Document();
+    final image = pw.MemoryImage(imageBytes);
+
+    pdf.addPage(pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      build: (pw.Context context) {
+        return pw.Center(
+          child: pw.Image(image),
+        );
+      },
+    ));
+
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/${_nameController.text.replaceAll(' ', '_')}.pdf');
+    await file.writeAsBytes(await pdf.save());
+    return file;
+  }
+
   void _uploadDocument() async {
     if (widget.imageBytes == null || _nameController.text.isEmpty || _selectedCategory == null) {
       showMessageBox(context, 'Error', 'Please select an image, name, and category.');
@@ -69,11 +91,21 @@ class _FilterScreenState extends State<FilterScreen> {
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
+
+      // Create a PDF from the image and save it to a file.
+      final pdfFile = await _createPdfFromImage(widget.imageBytes);
+
+      // Instead of passing image bytes, we now pass the PDF file to be uploaded.
+      // NOTE: The AppState.addDocument method needs to be adapted to handle file uploads to Firebase Storage.
+      // Since this is a UI-only example, we'll continue to pass the image bytes for now,
+      // but in a real application, you would pass the pdfFile.path and handle the upload there.
+
       await appState.addDocument(
         _nameController.text,
         _selectedCategory!,
-        widget.imageBytes!,
+        await pdfFile.readAsBytes(), // In a real app, you'd upload the file and pass a URL.
       );
+
       if (mounted) {
         showMessageBox(context, 'Success', 'Document uploaded for verification.');
         Navigator.of(context).pop();
