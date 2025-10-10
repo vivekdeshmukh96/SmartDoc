@@ -94,6 +94,14 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
           ),
         );
       }
+    } else {
+      // If no imageBytes, it means the user cancelled the scan/gallery pick or there was an error.
+      // Do not navigate to FilterScreen.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No image selected or scan cancelled.')),
+        );
+      }
     }
   }
 
