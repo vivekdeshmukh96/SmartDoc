@@ -1,9 +1,6 @@
-import 'dart:io';
-import 'package:collegeapplication/screens/filter_screen.dart';
-import 'package:collegeapplication/screens/scanner_screen.dart';
+import 'package:collegeapplication/screens/student/image_capture_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 
 class StudentUploadTab extends StatefulWidget {
   const StudentUploadTab({super.key});
@@ -14,32 +11,13 @@ class StudentUploadTab extends StatefulWidget {
 
 class _StudentUploadTabState extends State<StudentUploadTab> {
   Future<void> _getImage(ImageSource source) async {
-    if (source == ImageSource.camera) {
-      final scannedImageBytes = await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ScannerScreen()),
-      );
-      if (scannedImageBytes != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FilterScreen(imageBytes: scannedImageBytes),
-          ),
-        );
-      }
-    } else {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: source);
-      if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FilterScreen(imageBytes: bytes),
-          ),
-        );
-      }
-    }
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageCaptureScreen(source: source),
+      ),
+    );
   }
 
   @override
@@ -72,19 +50,23 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
         ),
         const SizedBox(height: 20),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('Scan Document'),
-              onPressed: () => _getImage(ImageSource.camera),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigoAccent),
+            Expanded(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Scan Document'),
+                onPressed: () => _getImage(ImageSource.camera),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.indigoAccent),
+              ),
             ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.photo_library),
-              label: const Text('Upload from Gallery'),
-              onPressed: () => _getImage(ImageSource.gallery),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.photo_library),
+                label: const Text('Upload from Gallery'),
+                onPressed: () => _getImage(ImageSource.gallery),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+              ),
             ),
           ],
         ),
