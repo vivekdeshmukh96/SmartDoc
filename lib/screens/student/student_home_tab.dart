@@ -3,6 +3,7 @@ import 'package:collegeapplication/models/document.dart';
 import 'package:collegeapplication/screens/student/document_detail_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../extensions/string_extension.dart';
 
 class StudentHomeTab extends StatelessWidget {
   const StudentHomeTab({super.key});

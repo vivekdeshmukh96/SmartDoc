@@ -1,6 +1,6 @@
 import 'package:collegeapplication/models/document.dart';
-import 'package:collegeapplication/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
+import '../../extensions/string_extension.dart';
 
 class DocumentDetailScreen extends StatelessWidget {
   final Document document;
@@ -26,7 +26,7 @@ class DocumentDetailScreen extends StatelessWidget {
             Expanded(
               child: InteractiveViewer(
                 child: Center(
-                  child: Image.network(document.downloadUrl),
+                  child: document.downloadUrl != null ? Image.network(document.downloadUrl!) : const Text('No preview available'),
                 ),
               ),
             ),

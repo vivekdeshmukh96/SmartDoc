@@ -41,7 +41,7 @@ class AuthWrapper extends StatelessWidget {
               }
 
               if (userSnapshot.hasData && userSnapshot.data!.exists) {
-                final userData = User.fromFirestore(userSnapshot.data!);
+                final userData = User.fromFirestore(userSnapshot.data!.data() as Map<String, dynamic>, userSnapshot.data!.id);
                 switch (userData.role) {
                   case Role.admin:
                     return const AdminDashboardScreen();
