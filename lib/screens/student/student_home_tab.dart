@@ -1,3 +1,4 @@
+import 'package:collegeapplication/screens/student/student_dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,6 +38,15 @@ class StudentHomeTab extends StatelessWidget {
                         Text(
                           'No documents uploaded yet.',
                           style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // Navigate to the upload tab
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StudentDashboardScreen(initialIndex: 1)));
+                          },
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('Scan Document'),
                         ),
                       ],
                     ),
