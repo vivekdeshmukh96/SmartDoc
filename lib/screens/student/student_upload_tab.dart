@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:collegeapplication/screens/filter_screen.dart';
 import 'package:collegeapplication/screens/scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../app_state.dart';
@@ -23,20 +25,26 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
 
   Future<void> _getImage(ImageSource source) async {
     if (source == ImageSource.camera) {
-      final scannedImage = await Navigator.push(
+      final scannedImageBytes = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const ScannerScreen()),
       );
-      if (scannedImage != null) {
-        final filteredImage = await Navigator.push(
+      if (scannedImageBytes != null) {
+        final tempDir = await getTemporaryDirectory();
+        final file = await File('${tempDir.path}/image.png').create();
+        file.writeAsBytesSync(scannedImageBytes);
+
+        final filteredImageFile = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => FilterScreen(imageBytes: scannedImage),
+            builder: (context) => FilterScreen(image: file),
           ),
         );
-        if (filteredImage != null) {
+
+        if (filteredImageFile != null) {
+          final imageBytes = await filteredImageFile.readAsBytes();
           setState(() {
-            _imageBytes = filteredImage;
+            _imageBytes = imageBytes;
           });
           _analyzeDocument();
         }
