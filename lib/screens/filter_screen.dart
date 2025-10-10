@@ -1,89 +1,115 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/document_storage_service.dart';
 
 class FilterScreen extends StatefulWidget {
   final String imagePath;
-  final Future<void> Function()? onDispose;
 
-  const FilterScreen({
-    super.key,
-    required this.imagePath,
-    this.onDispose,
-  });
+  const FilterScreen({super.key, required this.imagePath});
 
   @override
   State<FilterScreen> createState() => _FilterScreenState();
 }
 
 class _FilterScreenState extends State<FilterScreen> {
-  bool _isUploading = false;
+  final DocumentStorageService _storageService = DocumentStorageService();
+  bool _isSaving = false;
 
-  Future<void> _uploadToFirebase() async {
-    setState(() => _isUploading = true);
+  static const _tempImagePathKey = 'temp_image_path';
+
+  Future<void> _cleanupTempFiles() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_tempImagePathKey);
+
+      final tempFile = File(widget.imagePath);
+      if (await tempFile.exists()) {
+        await tempFile.delete();
+      }
+    } catch (e) {
+      print('Error during cleanup: $e');
+    }
+  }
+
+  Future<void> _saveDocument() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception("User not logged in");
-      }
+      await _storageService.saveDocument(widget.imagePath);
 
-      final file = File(widget.imagePath);
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child("user_docs/${user.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg");
+      await _cleanupTempFiles();
 
-      await storageRef.putFile(file);
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // The 'mounted' check is crucial to prevent crashes.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("✅ Uploaded Successfully!\nURL: $downloadUrl")),
+          const SnackBar(
+            content: Text('Document saved successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
-        // Only pop the navigator if the widget is still in the tree.
-        Navigator.pop(context);
+        Navigator.of(context).pop(); // Go back from FilterScreen
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Upload failed: $e")),
+          SnackBar(content: Text('Error saving document: $e')),
         );
       }
     } finally {
-      // Always delete the temp file, even on failure.
-      if (widget.onDispose != null) {
-        await widget.onDispose!();
-      }
       if (mounted) {
-        setState(() => _isUploading = false);
+        setState(() => _isSaving = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Apply Filter & Upload")),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Use a flexible container to prevent overflow.
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.file(File(widget.imagePath)),
-            ),
+    return WillPopScope(
+      onWillPop: () async {
+        await _cleanupTempFiles();
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Finalize Document'),
+          actions: [
+            if (_isSaving)
+              const Padding(
+                padding: EdgeInsets.only(right: 16.0),
+                child: Center(child: CircularProgressIndicator(color: Colors.white)),
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.check),
+                onPressed: _saveDocument,
+                tooltip: 'Save Document',
+              ),
+          ],
+        ),
+        body: Center(
+          child: Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Image.file(File(widget.imagePath)),
+                ),
+              ),
+              // Placeholder for filter controls
+              Container(
+                height: 100,
+                color: Colors.grey[200],
+                child: const Center(
+                  child: Text('Filter controls will be here', style: TextStyle(color: Colors.grey)),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _isUploading ? null : _uploadToFirebase,
-            child: _isUploading
-                ? const CircularProgressIndicator(color: Colors.white)
-                : const Text("Next → Upload to Firebase"),
-          ),
-        ],
+        ),
       ),
     );
   }

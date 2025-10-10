@@ -1,8 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import 'app_state.dart';
 import 'firebase_options.dart';
 import 'screens/common/auth_wrapper.dart';
 
@@ -19,15 +17,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AppState(),
-      child: MaterialApp(
-        title: 'SmartDoc',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: const AuthWrapper(),
+    return MaterialApp(
+      title: 'SmartDoc',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
+      home: const AuthWrapper(),
     );
   }
 }
