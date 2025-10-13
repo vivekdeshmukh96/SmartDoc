@@ -258,16 +258,6 @@ Widget build(BuildContext context) {
                       return DocumentCard(
                         document: doc,
                         subtitle: 'Uploaded by: $uploadedBy on ${doc.uploadedDate}',
-                        trailing: ElevatedButton(
-                          onPressed: () => _showVerificationModal(context, doc),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.indigo,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            textStyle: const TextStyle(fontSize: 14),
-                          ),
-                          child: const Text('Review'),
-                        ),
                       );
                     },
                   );

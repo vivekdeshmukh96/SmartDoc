@@ -65,11 +65,6 @@ class FacultyHomeTab extends StatelessWidget {
                         return DocumentCard(
                           document: doc,
                           subtitle: 'Uploaded by: $uploadedBy on ${doc.uploadedDate}',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Tap "Verify" tab to review this document.')),
-                            );
-                          },
                         );
                       },
                     );

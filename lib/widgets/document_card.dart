@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 
 class DocumentCard extends StatelessWidget {
   final Document document;
+  final String? subtitle;
 
-  const DocumentCard({super.key, required this.document});
+  const DocumentCard({super.key, required this.document, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +36,14 @@ class DocumentCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              document.category,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
+            if (subtitle != null)
+              Text(
+                subtitle!,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
               ),
-            ),
             const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -55,7 +57,7 @@ class DocumentCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${document.uploadedAt.day}/${document.uploadedAt.month}/${document.uploadedAt.year}',
+                  document.uploadedDate,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -94,12 +96,12 @@ class DocumentCard extends StatelessWidget {
     switch (document.status) {
       case DocumentStatus.pending:
         return Colors.orange;
-      case DocumentStatus.verified:
+      case DocumentStatus.approved:
         return Colors.green;
       case DocumentStatus.rejected:
         return Colors.red;
-      default:
-        return Colors.grey;
+      case DocumentStatus.resubmission:
+        return Colors.blue;
     }
   }
 }

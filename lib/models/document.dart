@@ -9,6 +9,7 @@ class Document {
   final String id;
   final String name;
   final String category;
+  final String fileType;
   final DocumentStatus status;
   final String uploadedByUserId;
   final String uploadedDate;
@@ -21,6 +22,7 @@ class Document {
     required this.id,
     required this.name,
     required this.category,
+    required this.fileType,
     this.status = DocumentStatus.pending,
     required this.uploadedByUserId,
     required this.uploadedDate,
@@ -35,6 +37,7 @@ class Document {
       id: documentId,
       name: data['name'] ?? '',
       category: data['category'] ?? '',
+      fileType: data['fileType'] ?? '',
       status: DocumentStatus.values.firstWhere(
             (e) => e.toString() == 'DocumentStatus.${data['status']}',
         orElse: () => DocumentStatus.pending,
@@ -52,6 +55,7 @@ class Document {
     String? id,
     String? name,
     String? category,
+    String? fileType,
     DocumentStatus? status,
     String? uploadedByUserId,
     String? uploadedDate,
@@ -64,6 +68,7 @@ class Document {
       id: id ?? this.id,
       name: name ?? this.name,
       category: category ?? this.category,
+      fileType: fileType ?? this.fileType,
       status: status ?? this.status,
       uploadedByUserId: uploadedByUserId ?? this.uploadedByUserId,
       uploadedDate: uploadedDate ?? this.uploadedDate,
