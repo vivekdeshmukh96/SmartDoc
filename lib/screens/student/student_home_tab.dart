@@ -28,9 +28,11 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'My Documents',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  'My Documents',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
               ElevatedButton.icon(
                 onPressed: _startDocumentScan,
@@ -101,29 +103,30 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   Future<void> _startDocumentScan() async {
     final DocumentScannerOptions options = DocumentScannerOptions(
       mode: ScannerMode.full,
-      isGalleryImportAllowed: true,
       pageLimit: 5,
     );
 
     final DocumentScanner documentScanner = DocumentScanner(options: options);
 
     try {
-      final DocumentScanResult result = await documentScanner.scanDocument();
+      final List<String> images = await documentScanner.scanDocument();
 
       final Directory tempDir = await getTemporaryDirectory();
-      for (final photo in result.images) {
+      for (final photo in images) {
         final File imageFile = File(photo);
         // Here you can save the file to local storage or upload it to a server
         // For now, let's just print the path
         print('Scanned document saved at: ${imageFile.path}');
       }
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Documents scanned successfully!'),
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error scanning document: $e'),
