@@ -104,6 +104,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     final DocumentScannerOptions options = DocumentScannerOptions(
       mode: ScannerMode.full,
       pageLimit: 5,
+      resultMode: DocumentScannerResultMode.jpeg,
     );
 
     final DocumentScanner documentScanner = DocumentScanner(options: options);
