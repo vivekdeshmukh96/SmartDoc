@@ -1,81 +1,105 @@
-import 'package:collegeapplication/widgets/status_badge.dart';
+import 'package:collegeapplication/models/document.dart';
 import 'package:flutter/material.dart';
-
-import '../models/document.dart';
-import '../utils/icon_map.dart'; // Import the icon map
 
 class DocumentCard extends StatelessWidget {
   final Document document;
-  final String? subtitle;
-  final VoidCallback? onTap;
-  final Widget? trailing;
 
-  const DocumentCard({
-    super.key,
-    required this.document,
-    this.subtitle,
-    this.onTap,
-    this.trailing,
-  });
+  const DocumentCard({super.key, required this.document});
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                getIconForCategory(document.category), // Use the icon map
-                size: 40,
-                color: Theme.of(context).primaryColor,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      document.name,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _buildFileTypeIcon(),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    document.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Category: ${document.category}',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle!,
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    StatusBadge(status: document.status),
-                  ],
-                ),
-              ),
-              if (trailing != null) ...[
-                const SizedBox(width: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: trailing!,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              document.category,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+            ),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  document.status.name.toUpperCase(),
+                  style: TextStyle(
+                    color: _getStatusColor(),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  '${document.uploadedAt.day}/${document.uploadedAt.month}/${document.uploadedAt.year}',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildFileTypeIcon() {
+    IconData iconData;
+    Color color;
+    switch (document.fileType) {
+      case 'pdf':
+        iconData = Icons.picture_as_pdf;
+        color = Colors.red;
+        break;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        iconData = Icons.image;
+        color = Colors.blue;
+        break;
+      default:
+        iconData = Icons.insert_drive_file;
+        color = Colors.grey;
+    }
+    return Icon(iconData, color: color, size: 40);
+  }
+
+  Color _getStatusColor() {
+    switch (document.status) {
+      case DocumentStatus.pending:
+        return Colors.orange;
+      case DocumentStatus.verified:
+        return Colors.green;
+      case DocumentStatus.rejected:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }

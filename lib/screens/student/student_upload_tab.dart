@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collegeapplication/services/firebase_service.dart';
 import 'package:collegeapplication/widgets/message_box.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class StudentUploadTab extends StatefulWidget {
   const StudentUploadTab({super.key});
@@ -16,28 +15,31 @@ class StudentUploadTab extends StatefulWidget {
 
 class _StudentUploadTabState extends State<StudentUploadTab> {
   bool _isLoading = false;
+  final FirebaseService _firebaseService = FirebaseService();
 
-  Future<void> _getImageAndUpload(ImageSource source) async {
+  Future<void> _pickAndUploadFile(Function(File) uploadFunction) async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
     try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: source);
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+      );
 
-      if (pickedFile != null) {
-        final imageFile = File(pickedFile.path);
-        _showUploadDialog(imageFile);
+      if (result != null) {
+        final file = File(result.files.single.path!);
+        _showUploadDialog(file);
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No image selected.')),
+            const SnackBar(content: Text('No file selected.')),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        showMessageBox(context, 'Error', 'Failed to pick image: $e');
+        showMessageBox(context, 'Error', 'Failed to pick file: $e');
       }
     } finally {
       if (mounted) {
@@ -46,7 +48,7 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     }
   }
 
-  void _showUploadDialog(File imageFile) {
+  void _showUploadDialog(File file) {
     final TextEditingController nameController = TextEditingController();
     String? selectedCategory;
 
@@ -97,7 +99,7 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
               onPressed: () {
                 if (nameController.text.isNotEmpty && selectedCategory != null) {
                   Navigator.of(context).pop();
-                  _uploadDocument(imageFile, nameController.text, selectedCategory!);
+                  _uploadDocument(file, nameController.text, selectedCategory!);
                 } else {
                   showMessageBox(context, 'Error', 'Please provide a name and category.');
                 }
@@ -109,30 +111,13 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     );
   }
 
-  Future<void> _uploadDocument(File imageFile, String name, String category) async {
+  Future<void> _uploadDocument(File file, String name, String category) async {
     setState(() => _isLoading = true);
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
 
     try {
-      final documentId = const Uuid().v4();
-      final storageRef = FirebaseStorage.instance.ref().child('documents/${currentUser.uid}/$documentId.jpg');
-      final uploadTask = storageRef.putFile(imageFile);
-      final snapshot = await uploadTask.whenComplete(() => null);
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-
-      await FirebaseFirestore.instance.collection('documents').doc(documentId).set({
-        'id': documentId,
-        'name': name,
-        'category': category,
-        'downloadUrl': downloadUrl,
-        'uploadedByUserId': currentUser.uid,
-        'uploadedDate': DateTime.now().toIso8601String(),
-        'status': 'pending',
-        'comments': '',
-        'verifiedByUserId': null,
-        'verificationDate': null,
-      });
+      final fileType = file.path.split('.').last;
+      final fileUrl = await _firebaseService.uploadFile(file, name);
+      await _firebaseService.saveDocumentMetadata(name, category, fileType, fileUrl);
 
       if (mounted) {
         showMessageBox(context, 'Success', 'Document uploaded successfully.');
@@ -175,7 +160,16 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
               ElevatedButton.icon(
                 icon: const Icon(Icons.camera_alt_outlined),
                 label: const Text('Scan with Camera'),
-                onPressed: _isLoading ? null : () => _getImageAndUpload(ImageSource.camera),
+                onPressed: _isLoading
+                    ? null
+                    : () => _pickAndUploadFile((file) async {
+                          final picker = ImagePicker();
+                          final pickedFile = await picker.pickImage(source: ImageSource.camera);
+                          if (pickedFile != null) {
+                            return File(pickedFile.path);
+                          }
+                          return null;
+                        }),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -185,10 +179,38 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
               ElevatedButton.icon(
                 icon: const Icon(Icons.photo_library_outlined),
                 label: const Text('Upload from Gallery'),
-                onPressed: _isLoading ? null : () => _getImageAndUpload(ImageSource.gallery),
+                onPressed: _isLoading ? null : () => _pickAndUploadFile((file) async {
+                  final picker = ImagePicker();
+                  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                  if (pickedFile != null) {
+                    return File(pickedFile.path);
+                  }
+                  return null;
+                }),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.secondary,
                   foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: const Text('Upload PDF'),
+                onPressed: _isLoading ? null : () => _pickAndUploadFile((file) async {
+                  final result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['pdf'],
+                  );
+                  if (result != null) {
+                    return File(result.files.single.path!);
+                  }
+                  return null;
+                }),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade400, // Example color
+                  foregroundColor: Colors.white, // Example color
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
