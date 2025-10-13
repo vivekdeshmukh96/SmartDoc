@@ -22,7 +22,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     final DocumentScanner documentScanner = DocumentScanner(
       options: DocumentScannerOptions(
         mode: ScannerMode.full,
-        galleryImportAllowed: true,
         pageLimit: 1,
       ),
     );
