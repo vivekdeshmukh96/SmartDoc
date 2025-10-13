@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/document.dart';
 import 'package:collegeapplication/screens/student/document_detail_screen.dart';
+import 'package:collegeapplication/screens/student/document_scanner_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../extensions/string_extension.dart';
@@ -17,9 +18,26 @@ class StudentHomeTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'My Documents',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'My Documents',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DocumentScannerScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Scan Document'),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Expanded(
