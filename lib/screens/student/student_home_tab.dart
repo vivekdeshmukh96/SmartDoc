@@ -1,14 +1,21 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/document.dart';
 import 'package:collegeapplication/screens/student/document_detail_screen.dart';
-import 'package:collegeapplication/screens/student/document_scanner_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../extensions/string_extension.dart';
 
-class StudentHomeTab extends StatelessWidget {
+class StudentHomeTab extends StatefulWidget {
   const StudentHomeTab({super.key});
 
+  @override
+  State<StudentHomeTab> createState() => _StudentHomeTabState();
+}
+
+class _StudentHomeTabState extends State<StudentHomeTab> {
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -26,14 +33,7 @@ class StudentHomeTab extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DocumentScannerScreen(),
-                    ),
-                  );
-                },
+                onPressed: _startDocumentScan,
                 icon: const Icon(Icons.camera_alt),
                 label: const Text('Scan Document'),
               ),
@@ -96,5 +96,39 @@ class StudentHomeTab extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _startDocumentScan() async {
+    final DocumentScannerOptions options = DocumentScannerOptions(
+      mode: ScannerMode.full,
+      isGalleryImportAllowed: true,
+      pageLimit: 5,
+    );
+
+    final DocumentScanner documentScanner = DocumentScanner(options: options);
+
+    try {
+      final DocumentScanResult result = await documentScanner.scanDocument();
+
+      final Directory tempDir = await getTemporaryDirectory();
+      for (final photo in result.images) {
+        final File imageFile = File(photo);
+        // Here you can save the file to local storage or upload it to a server
+        // For now, let's just print the path
+        print('Scanned document saved at: ${imageFile.path}');
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Documents scanned successfully!'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error scanning document: $e'),
+        ),
+      );
+    }
   }
 }
