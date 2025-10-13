@@ -45,15 +45,13 @@ class FirebaseService {
         name: documentName,
         category: category,
         fileType: fileType,
-        url: fileUrl,
-        uploadedAt: DateTime.now(),
+        downloadUrl: fileUrl,
+        uploadedDate: "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
         status: DocumentStatus.pending,
         uploadedByUserId: user.uid,
       );
 
       await _firestore
-          .collection('users')
-          .doc(user.uid)
           .collection('documents')
           .add(document.toFirestore());
     } catch (e) {

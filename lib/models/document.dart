@@ -51,6 +51,21 @@ class Document {
     );
   }
 
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'category': category,
+      'fileType': fileType,
+      'status': status.name,
+      'uploadedByUserId': uploadedByUserId,
+      'uploadedDate': uploadedDate,
+      'verifiedByUserId': verifiedByUserId,
+      'verificationDate': verificationDate,
+      'comments': comments,
+      'downloadUrl': downloadUrl,
+    };
+  }
+
   Document copyWith({
     String? id,
     String? name,
