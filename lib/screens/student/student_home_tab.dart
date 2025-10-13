@@ -109,10 +109,10 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     final DocumentScanner documentScanner = DocumentScanner(options: options);
 
     try {
-      final List<String> images = await documentScanner.scanDocument();
+      final DocumentScanningResult result = await documentScanner.scanDocument();
 
       final Directory tempDir = await getTemporaryDirectory();
-      for (final photo in images) {
+      for (final photo in result.images) {
         final File imageFile = File(photo);
         // Here you can save the file to local storage or upload it to a server
         // For now, let's just print the path
