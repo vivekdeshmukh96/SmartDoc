@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:collegeapplication/services/firebase_service.dart';
+import 'package:collegeapplication/services/supabase_service.dart';
 import 'package:collegeapplication/widgets/message_box.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -18,11 +19,34 @@ class StudentUploadTab extends StatefulWidget {
 class _StudentUploadTabState extends State<StudentUploadTab> {
   bool _isLoading = false;
   final FirebaseService _firebaseService = FirebaseService();
+  final SupabaseService _supabaseService = SupabaseService();
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _requestPermissions() async {
     await Permission.camera.request();
     await Permission.photos.request();
+  }
+
+  Future<File?> _startDocumentScan() async {
+    final DocumentScanner documentScanner = DocumentScanner(
+      options: DocumentScannerOptions(
+        mode: ScannerMode.full,
+        pageLimit: 1,
+      ),
+    );
+
+    try {
+      final DocumentScanningResult result = await documentScanner.scanDocument();
+
+      if (result.images.isNotEmpty) {
+        return File(result.images.first);
+      }
+    } catch (e) {
+      if (mounted) {
+        showMessageBox(context, 'Error', 'Failed to scan document: $e');
+      }
+    }
+    return null;
   }
 
   Future<File?> _pickImage(ImageSource source) async {
@@ -94,58 +118,59 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Upload Document'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Document Name'),
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Upload Document'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Document Name'),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  hint: const Text('Select Category'),
+                  value: selectedCategory,
+                  items: [
+                    'Aadhar Card',
+                    'PAN Card',
+                    'Income Certificate',
+                    'Driving License',
+                    'Passport'
+                  ].map((String category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      selectedCategory = newValue;
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.of(context).pop(),
               ),
-              const SizedBox(height: 16),
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('categories').snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const CircularProgressIndicator();
-                  var categories = snapshot.data!.docs.map((doc) => doc['name'] as String).toList();
-                  return DropdownButtonFormField<String>(
-                    hint: const Text('Select Category'),
-                    value: selectedCategory,
-                    items: categories.map((String category) {
-                      return DropdownMenuItem<String>(
-                        value: category,
-                        child: Text(category),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                        selectedCategory = newValue;
-                      });
-                    },
-                  );
+              ElevatedButton(
+                child: const Text('Upload'),
+                onPressed: () {
+                  if (nameController.text.isNotEmpty && selectedCategory != null) {
+                    Navigator.of(context).pop();
+                    _uploadDocument(file, nameController.text, selectedCategory!);
+                  } else {
+                    showMessageBox(context, 'Error', 'Please provide a name and category.');
+                  }
                 },
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('Upload'),
-              onPressed: () {
-                if (nameController.text.isNotEmpty && selectedCategory != null) {
-                  Navigator.of(context).pop();
-                  _uploadDocument(file, nameController.text, selectedCategory!);
-                } else {
-                  showMessageBox(context, 'Error', 'Please provide a name and category.');
-                }
-              },
-            ),
-          ],
-        );
+          );
+        });
       },
     );
   }
@@ -155,7 +180,7 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
 
     try {
       final fileType = file.path.split('.').last;
-      final fileUrl = await _firebaseService.uploadFile(file, name);
+      final fileUrl = await _supabaseService.uploadFile(file, name);
       await _firebaseService.saveDocumentMetadata(name, category, fileType, fileUrl);
 
       if (mounted) {
@@ -198,8 +223,8 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
               const SizedBox(height: 40),
               ElevatedButton.icon(
                 icon: const Icon(Icons.camera_alt_outlined),
-                label: const Text('Scan with Camera'),
-                onPressed: _isLoading ? null : () => _pickAndUploadFile(() => _pickImage(ImageSource.camera)),
+                label: const Text('Scan Document'),
+                onPressed: _isLoading ? null : () => _pickAndUploadFile(_startDocumentScan),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
