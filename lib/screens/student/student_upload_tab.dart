@@ -19,6 +19,7 @@ class StudentUploadTab extends StatefulWidget {
 
 class _StudentUploadTabState extends State<StudentUploadTab> {
   bool _isLoading = false;
+  File? _selectedFile;
   final FirebaseService _firebaseService = FirebaseService();
   final SupabaseService _supabaseService = SupabaseService();
   final ImagePicker _picker = ImagePicker();
@@ -82,18 +83,55 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     return null;
   }
 
+  void _showUploadOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Scan Document'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadFile(_startDocumentScan);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Upload from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadFile(() => _pickImage(ImageSource.gallery));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf_outlined),
+              title: const Text('Upload PDF'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadFile(_pickPdf);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   Future<void> _pickAndUploadFile(Future<File?> Function() pickFunction) async {
     if (_isLoading) return;
 
     await _requestPermissions();
 
-    setState(() => _isLoading = true);
-
     try {
       final file = await pickFunction();
 
       if (file != null) {
-        _showUploadDialog(file);
+        setState(() {
+          _selectedFile = file;
+        });
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -104,10 +142,6 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     } catch (e) {
       if (mounted) {
         showMessageBox(context, 'Error', 'Failed to pick file: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
       }
     }
   }
@@ -194,6 +228,9 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
       if (mounted) {
         showMessageBox(context, 'Success', 'Document uploaded successfully.');
       }
+      setState(() {
+        _selectedFile = null;
+      });
     } catch (e) {
       if (mounted) {
         showMessageBox(context, 'Error', 'Failed to upload document: $e');
@@ -215,49 +252,66 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.upload_file_rounded, size: 100, color: Colors.grey.shade400),
-              const SizedBox(height: 20),
-              Text(
-                'Upload a Document',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Your document will be securely uploaded and sent for verification.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
-              ),
+              if (_selectedFile != null)
+                Column(
+                  children: [
+                    Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: _selectedFile!.path.endsWith('.pdf')
+                          ? const Icon(Icons.picture_as_pdf, size: 100)
+                          : Image.file(_selectedFile!,
+                              fit: BoxFit.cover, width: double.infinity),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.clear),
+                          label: const Text('Clear'),
+                          onPressed: () {
+                            setState(() {
+                              _selectedFile = null;
+                            });
+                          },
+                        ),
+                      ],
+                    )
+                  ],
+                )
+              else
+                GestureDetector(
+                  onTap: _showUploadOptions,
+                  child: Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.cloud_upload_outlined, size: 80, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Tap to select a document',
+                          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               const SizedBox(height: 40),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.camera_alt_outlined),
-                label: const Text('Scan Document'),
-                onPressed: _isLoading ? null : () => _pickAndUploadFile(_startDocumentScan),
+              ElevatedButton(
+                child: const Text('Upload Document'),
+                onPressed: _isLoading || _selectedFile == null
+                    ? null
+                    : () => _showUploadDialog(_selectedFile!),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Upload from Gallery'),
-                onPressed: _isLoading ? null : () => _pickAndUploadFile(() => _pickImage(ImageSource.gallery)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('Upload PDF'),
-                onPressed: _isLoading ? null : () => _pickAndUploadFile(_pickPdf),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade400, // Example color
-                  foregroundColor: Colors.white, // Example color
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),

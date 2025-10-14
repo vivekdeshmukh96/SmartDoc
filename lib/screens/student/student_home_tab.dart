@@ -1,12 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/document.dart';
 import 'package:collegeapplication/screens/student/document_detail_screen.dart';
-import 'package:collegeapplication/widgets/document_card.dart';
+import 'package:collegeapplication/services/document_storage_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class StudentHomeTab extends StatelessWidget {
+class StudentHomeTab extends StatefulWidget {
   const StudentHomeTab({super.key});
+
+  @override
+  State<StudentHomeTab> createState() => _StudentHomeTabState();
+}
+
+class _StudentHomeTabState extends State<StudentHomeTab> {
+  final DocumentStorageService _documentStorageService =
+      DocumentStorageService();
+
+  Future<void> _deleteDocument(String documentId) async {
+    try {
+      //Also delete from firestore
+      await FirebaseFirestore.instance.collection('documents').doc(documentId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Document deleted successfully.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete document: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,18 +89,41 @@ class StudentHomeTab extends StatelessWidget {
                           doc.data() as Map<String, dynamic>, doc.id))
                       .toList();
 
-                  return GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.8,
-                    ),
+                  return ListView.builder(
                     itemCount: documents.length,
                     itemBuilder: (context, index) {
                       final doc = documents[index];
-                      return GestureDetector(
-                        onTap: () {
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: ListTile(
+                          leading: const Icon(Icons.picture_as_pdf),
+                          title: Text(doc.name),
+                          subtitle: Text('Uploaded on: ${doc.uploadedDate}'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.visibility),
+                                onPressed: () async {
+                                  if (doc.downloadUrl != null && await canLaunchUrl(Uri.parse(doc.downloadUrl!))) {
+                                    await launchUrl(Uri.parse(doc.downloadUrl!));
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Could not open document.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => _deleteDocument(doc.id),
+                              ),
+                            ],
+                          ),
+                           onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -80,7 +132,7 @@ class StudentHomeTab extends StatelessWidget {
                             ),
                           );
                         },
-                        child: DocumentCard(document: doc),
+                        ),
                       );
                     },
                   );
