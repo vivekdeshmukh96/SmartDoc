@@ -6,7 +6,7 @@ class SupabaseService {
 
   Future<String> uploadFile(File file, String name, String userId) async {
     final String path = '/documents/$userId/$name';
-    await _client.storage.from('documents').upload(path, file);
-    return _client.storage.from('documents').getPublicUrl(path);
+    await _client.storage.from('Document Bucket').upload(path, file);
+    return _client.storage.from('Document Bucket').getPublicUrl(path);
   }
 }
