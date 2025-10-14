@@ -41,35 +41,9 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // You can replace this with an actual logo image
-              Icon(
-                Icons.school,
-                size: 100,
-                color: Colors.white.withOpacity(0.9),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'SmartDoc',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      offset: Offset(2.0, 2.0),
-                      blurRadius: 3.0,
-                      color: Color.fromARGB(100, 0, 0, 0),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Your Digital Document Hub',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white.withOpacity(0.8),
-                ),
+              Image.asset(
+                'assets/images/logo.jpg',
+                height: 150,
               ),
               const SizedBox(height: 50),
               const CircularProgressIndicator(
