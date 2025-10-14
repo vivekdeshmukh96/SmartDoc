@@ -7,6 +7,7 @@ class User {
   final Role role;
   final String? rollNumber;
   final String? className;
+  final String? photoURL;
 
   User({
     required this.id,
@@ -15,6 +16,7 @@ class User {
     required this.role,
     this.rollNumber,
     this.className,
+    this.photoURL,
   });
 
   factory User.fromFirestore(Map<String, dynamic> data, String id) {
@@ -25,6 +27,7 @@ class User {
       role: Role.values.firstWhere((e) => e.name == data['role']),
       rollNumber: data['rollNumber'],
       className: data['className'],
+      photoURL: data['photoURL'],
     );
   }
 
@@ -35,6 +38,7 @@ class User {
       'role': role.name,
       'rollNumber': rollNumber,
       'className': className,
+      'photoURL': photoURL,
     };
   }
 
@@ -45,6 +49,7 @@ class User {
     Role? role,
     String? rollNumber,
     String? className,
+    String? photoURL,
   }) {
     return User(
       id: id ?? this.id,
@@ -53,6 +58,7 @@ class User {
       role: role ?? this.role,
       rollNumber: rollNumber ?? this.rollNumber,
       className: className ?? this.className,
+      photoURL: photoURL ?? this.photoURL,
     );
   }
 }
