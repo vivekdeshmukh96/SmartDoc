@@ -1,53 +1,12 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/document.dart';
 import 'package:collegeapplication/screens/student/document_detail_screen.dart';
-import 'package:collegeapplication/services/firebase_service.dart';
 import 'package:collegeapplication/widgets/document_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 
-class StudentHomeTab extends StatefulWidget {
+class StudentHomeTab extends StatelessWidget {
   const StudentHomeTab({super.key});
-
-  @override
-  State<StudentHomeTab> createState() => _StudentHomeTabState();
-}
-
-class _StudentHomeTabState extends State<StudentHomeTab> {
-  final FirebaseService _firebaseService = FirebaseService();
-
-  Future<void> _startDocumentScan() async {
-    final DocumentScanner documentScanner = DocumentScanner(
-      options: DocumentScannerOptions(
-        mode: ScannerMode.full,
-        pageLimit: 1,
-      ),
-    );
-
-    try {
-      final DocumentScanningResult result = await documentScanner.scanDocument();
-
-      if (result.images.isNotEmpty) {
-        final File imageFile = File(result.images.first);
-        final String documentName = 'Scanned Document'; // You might want to let the user name this
-        final String category = 'General'; // Or select a category
-        final String fileType = 'jpg';
-
-        final String fileUrl = await _firebaseService.uploadFile(imageFile, documentName);
-        await _firebaseService.saveDocumentMetadata(documentName, category, fileType, fileUrl);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Document uploaded successfully!')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to scan document: $e')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,11 +89,6 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _startDocumentScan,
-        label: const Text('Scan Document'),
-        icon: const Icon(Icons.camera_alt),
       ),
     );
   }
