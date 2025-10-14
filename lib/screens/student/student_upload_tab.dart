@@ -3,6 +3,7 @@ import 'package:collegeapplication/services/firebase_service.dart';
 import 'package:collegeapplication/services/supabase_service.dart';
 import 'package:collegeapplication/widgets/message_box.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:image_picker/image_picker.dart';
@@ -179,8 +180,15 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
     setState(() => _isLoading = true);
 
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        if (mounted) {
+          showMessageBox(context, 'Error', 'User not logged in. Please log in again.');
+        }
+        return;
+      }
       final fileType = file.path.split('.').last;
-      final fileUrl = await _supabaseService.uploadFile(file, name);
+      final fileUrl = await _supabaseService.uploadFile(file, name, user.uid);
       await _firebaseService.saveDocumentMetadata(name, category, fileType, fileUrl);
 
       if (mounted) {
