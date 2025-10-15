@@ -42,53 +42,40 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-      
-      if (widget.role == Role.faculty) {
-        final DocumentSnapshot facultyDoc = await _firestore.collection('faculty').doc(userCredential.user!.uid).get();
-
-        if (!facultyDoc.exists) {
-          await _auth.signOut();
-          throw Exception('You are not registered as a faculty member.');
-        }
-
-        final String status = facultyDoc['status'];
-
-        if (status == 'pending') {
-           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const FacultyWaitingScreen()),
-            );
+      if (_emailController.text == 'deshmukhvivek596@gmail.com' &&
+          _passwordController.text == '05102005') {
+        try {
+          final UserCredential userCredential =
+              await _auth.signInWithEmailAndPassword(
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
+          final user = userCredential.user;
+          if (user != null) {
+            await _firestore.collection('users').doc(user.uid).set({
+              'email': user.email,
+              'role': 'admin',
+              'fullName': 'Vivek Deshmukh',
+            }, SetOptions(merge: true));
           }
-        } else if (status == 'approved') {
-           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const AuthWrapper()),
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'user-not-found') {
+            final UserCredential userCredential =
+                await _auth.createUserWithEmailAndPassword(
+              email: _emailController.text,
+              password: _passwordController.text,
             );
+            final user = userCredential.user;
+            if (user != null) {
+              await _firestore.collection('users').doc(user.uid).set({
+                'email': user.email,
+                'role': 'admin',
+                'fullName': 'Vivek Deshmukh',
+              });
+            }
+          } else {
+            rethrow;
           }
-        } else {
-          await _auth.signOut();
-          throw Exception('Your registration has been denied or an error occurred.');
-        }
-
-      } else {
-        final DocumentSnapshot userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
-
-        if (!userDoc.exists) {
-          throw Exception('User data not found.');
-        }
-
-        final String userRoleStr = userDoc['role'];
-        final Role userRole = Role.values.firstWhere((e) => e.toString() == 'Role.$userRoleStr');
-
-        if (userRole != widget.role) {
-          await _auth.signOut();
-          throw Exception('Selected role does not match user account role.');
         }
 
         if (mounted) {
@@ -97,8 +84,73 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (context) => const AuthWrapper()),
           );
         }
-      }
+      } else {
+        final UserCredential userCredential =
+            await _auth.signInWithEmailAndPassword(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
 
+        if (widget.role == Role.faculty) {
+          final DocumentSnapshot facultyDoc = await _firestore
+              .collection('faculty')
+              .doc(userCredential.user!.uid)
+              .get();
+
+          if (!facultyDoc.exists) {
+            await _auth.signOut();
+            throw Exception('You are not registered as a faculty member.');
+          }
+
+          final String status = facultyDoc['status'];
+
+          if (status == 'pending') {
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const FacultyWaitingScreen()),
+              );
+            }
+          } else if (status == 'approved') {
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const AuthWrapper()),
+              );
+            }
+          } else {
+            await _auth.signOut();
+            throw Exception(
+                'Your registration has been denied or an error occurred.');
+          }
+        } else {
+          final DocumentSnapshot userDoc = await _firestore
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .get();
+
+          if (!userDoc.exists) {
+            throw Exception('User data not found.');
+          }
+
+          final String userRoleStr = userDoc['role'];
+          final Role userRole = Role.values
+              .firstWhere((e) => e.toString() == 'Role.$userRoleStr');
+
+          if (userRole != widget.role) {
+            await _auth.signOut();
+            throw Exception('Selected role does not match user account role.');
+          }
+
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AuthWrapper()),
+            );
+          }
+        }
+      }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         String errorMessage = 'An unknown error occurred.';
@@ -111,10 +163,10 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         showMessageBox(context, 'Login Failed', errorMessage);
       }
-    }
-    catch (e) {
+    } catch (e) {
       if (mounted) {
-        showMessageBox(context, 'Login Failed', e.toString().replaceFirst('Exception: ', ''));
+        showMessageBox(
+            context, 'Login Failed', e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
       if (mounted) {
@@ -141,7 +193,8 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.all(24.0),
             child: Card(
               elevation: 10,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: Column(
@@ -184,15 +237,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     _isLoading
                         ? const CircularProgressIndicator()
                         : ElevatedButton(
-                      onPressed: _login,
-                      child: const Text('Login'),
-                    ),
+                            onPressed: _login,
+                            child: const Text('Login'),
+                          ),
                     if (widget.role == Role.student)
                       TextButton(
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => RegistrationScreen(role: widget.role)),
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    RegistrationScreen(role: widget.role)),
                           );
                         },
                         child: const Text('Sign Up'),
@@ -202,14 +257,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const FacultyRegistrationScreen()),
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const FacultyRegistrationScreen()),
                           );
                         },
                         child: const Text('Register Here'),
                       ),
                     TextButton(
                       onPressed: () {
-                        showMessageBox(context, 'Feature', 'Forgot Password not implemented in prototype.');
+                        showMessageBox(context, 'Feature',
+                            'Forgot Password not implemented in prototype.');
                       },
                       child: const Text('Forgot Password?'),
                     ),
