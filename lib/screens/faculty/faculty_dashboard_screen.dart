@@ -1,83 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+azimport 'package:flutter/material.dart';
 
-import '../../widgets/custom_app_bar.dart';
-import '../../widgets/custom_bottom_nav_bar.dart';
-import 'faculty_home_tab.dart';
-import 'faculty_notifications_tab.dart';
-import 'faculty_profile_tab.dart';
-import 'faculty_verify_tab.dart';
-
-class FacultyDashboardScreen extends StatefulWidget {
+class FacultyDashboardScreen extends StatelessWidget {
   const FacultyDashboardScreen({super.key});
-
-  @override
-  State<FacultyDashboardScreen> createState() => _FacultyDashboardScreenState();
-}
-
-class _FacultyDashboardScreenState extends State<FacultyDashboardScreen> {
-  int _selectedIndex = 0;
-  String? _userName;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserName();
-  }
-
-  Future<void> _fetchUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (userDoc.exists) {
-        setState(() {
-          _userName = userDoc.data()!['name'];
-        });
-      }
-    }
-  }
-
-  final List<Widget> _widgetOptions = <Widget>[
-    const FacultyHomeTab(),
-    const FacultyVerifyTab(),
-    const FacultyNotificationsTab(),
-    const FacultyProfileTab(),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Welcome, ${_userName ?? 'Faculty'}!',
-        showLogout: true,
+      appBar: AppBar(
+        title: const Text('Faculty Dashboard'),
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.verified),
-            label: 'Verify',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+      body: const Center(
+        child: Text('Welcome, Faculty!'),
       ),
     );
   }

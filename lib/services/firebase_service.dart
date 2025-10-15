@@ -37,4 +37,42 @@ class FirebaseService {
       rethrow;
     }
   }
+
+  Future<void> registerFaculty({
+    required String email,
+    required String password,
+    required String name,
+    required String department,
+    String? contactNumber,
+  }) async {
+    try {
+      // Create the user in Firebase Auth
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Add custom claims to the user
+      await userCredential.user!.updateDisplayName(name);
+
+      // Store faculty details in Firestore
+      await _firestore.collection('faculty').doc(userCredential.user!.uid).set({
+        'fullName': name,
+        'email': email,
+        'department': department,
+        'contactNumber': contactNumber,
+        'status': 'pending',
+      });
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        throw Exception('The password provided is too weak.');
+      } else if (e.code == 'email-already-in-use') {
+        throw Exception('The account already exists for that email.');
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
+      throw Exception('An error occurred while registering the faculty.');
+    }
+  }
 }

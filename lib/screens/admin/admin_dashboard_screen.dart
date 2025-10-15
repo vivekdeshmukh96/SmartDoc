@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collegeapplication/screens/admin/admin_verification_tab.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -43,6 +44,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     const AdminUsersTab(),
     const AdminCategoriesTab(),
     const AdminAnalyticsTab(),
+    const AdminVerificationTab(),
   ];
 
   @override
@@ -76,6 +78,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.analytics),
             label: 'Analytics',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.verified_user),
+            label: 'Verification',
           ),
         ],
       ),

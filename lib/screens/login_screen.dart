@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collegeapplication/models/role.dart';
+import 'package:collegeapplication/screens/faculty/faculty_registration_screen.dart';
+import 'package:collegeapplication/screens/faculty/faculty_waiting_screen.dart';
 import 'package:collegeapplication/screens/student/registration_screen.dart';
 import 'package:collegeapplication/widgets/message_box.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/string_extensions.dart';
 import 'common/auth_wrapper.dart';
-
 
 class LoginScreen extends StatefulWidget {
   final Role role;
@@ -45,26 +46,57 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text,
         password: _passwordController.text,
       );
+      
+      if (widget.role == Role.faculty) {
+        final DocumentSnapshot facultyDoc = await _firestore.collection('faculty').doc(userCredential.user!.uid).get();
 
-      final DocumentSnapshot userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+        if (!facultyDoc.exists) {
+          await _auth.signOut();
+          throw Exception('You are not registered as a faculty member.');
+        }
 
-      if (!userDoc.exists) {
-        throw Exception('User data not found.');
-      }
+        final String status = facultyDoc['status'];
 
-      final String userRoleStr = userDoc['role'];
-      final Role userRole = Role.values.firstWhere((e) => e.toString() == 'Role.$userRoleStr');
+        if (status == 'pending') {
+           if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const FacultyWaitingScreen()),
+            );
+          }
+        } else if (status == 'approved') {
+           if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AuthWrapper()),
+            );
+          }
+        } else {
+          await _auth.signOut();
+          throw Exception('Your registration has been denied or an error occurred.');
+        }
 
-      if (userRole != widget.role) {
-        await _auth.signOut();
-        throw Exception('Selected role does not match user account role.');
-      }
+      } else {
+        final DocumentSnapshot userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const AuthWrapper()),
-        );
+        if (!userDoc.exists) {
+          throw Exception('User data not found.');
+        }
+
+        final String userRoleStr = userDoc['role'];
+        final Role userRole = Role.values.firstWhere((e) => e.toString() == 'Role.$userRoleStr');
+
+        if (userRole != widget.role) {
+          await _auth.signOut();
+          throw Exception('Selected role does not match user account role.');
+        }
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AuthWrapper()),
+          );
+        }
       }
 
     } on FirebaseAuthException catch (e) {
@@ -116,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'assets/images/logo.jpg',
+                      'assets/images/logo.png',
                       height: 100,
                     ),
                     const SizedBox(height: 20),
@@ -134,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
                         labelText: 'Email',
-                        hintText: 'student@college.edu',
+                        hintText: 'user@college.edu',
                         prefixIcon: Icon(Icons.email),
                       ),
                     ),
@@ -144,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
                       decoration: const InputDecoration(
                         labelText: 'Password',
-                        hintText: 'password', 
+                        hintText: 'password',
                         prefixIcon: Icon(Icons.lock),
                       ),
                     ),
@@ -155,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _login,
                       child: const Text('Login'),
                     ),
-                     if (widget.role == Role.student)
+                    if (widget.role == Role.student)
                       TextButton(
                         onPressed: () {
                           Navigator.push(
@@ -164,6 +196,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                         },
                         child: const Text('Sign Up'),
+                      ),
+                    if (widget.role == Role.faculty)
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const FacultyRegistrationScreen()),
+                          );
+                        },
+                        child: const Text('Register Here'),
                       ),
                     TextButton(
                       onPressed: () {

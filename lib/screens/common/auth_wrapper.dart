@@ -3,7 +3,7 @@ import 'package:collegeapplication/models/role.dart';
 import 'package:collegeapplication/models/user.dart';
 import 'package:collegeapplication/screens/admin/admin_dashboard_screen.dart';
 import 'package:collegeapplication/screens/faculty/faculty_dashboard_screen.dart';
-import 'package:collegeapplication/screens/login_screen.dart';
+import 'package:collegeapplication/screens/faculty/faculty_waiting_screen.dart';
 import 'package:collegeapplication/screens/role_selection_screen.dart';
 import 'package:collegeapplication/screens/student/student_dashboard_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
@@ -26,13 +26,14 @@ class AuthWrapper extends StatelessWidget {
         }
 
         if (snapshot.hasData && snapshot.data != null) {
-          return FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance
-                .collection('users')
-                .doc(snapshot.data!.uid)
-                .get(),
-            builder: (context, userSnapshot) {
-              if (userSnapshot.connectionState == ConnectionState.waiting) {
+          return FutureBuilder<List<DocumentSnapshot>>(
+            future: Future.wait([
+
+              FirebaseFirestore.instance.collection('users').doc(snapshot.data!.uid).get(),
+              FirebaseFirestore.instance.collection('faculty').doc(snapshot.data!.uid).get(),
+            ]),
+            builder: (context, snapshots) {
+              if (snapshots.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
                   body: Center(
                     child: CircularProgressIndicator(),
@@ -40,25 +41,35 @@ class AuthWrapper extends StatelessWidget {
                 );
               }
 
-              if (userSnapshot.hasData && userSnapshot.data!.exists) {
-                final userData = User.fromFirestore(userSnapshot.data!.data() as Map<String, dynamic>, userSnapshot.data!.id);
+              final userSnapshot = snapshots.data![0];
+              final facultySnapshot = snapshots.data![1];
+
+              if (facultySnapshot.exists) {
+                final status = facultySnapshot['status'];
+                if (status == 'approved') {
+                  return const FacultyDashboardScreen();
+                } else {
+                  return const FacultyWaitingScreen();
+                }
+              }
+
+              if (userSnapshot.exists) {
+                final userData = User.fromFirestore(userSnapshot.data() as Map<String, dynamic>, userSnapshot.id);
                 switch (userData.role) {
                   case Role.admin:
                     return const AdminDashboardScreen();
-                  case Role.faculty:
-                    return const FacultyDashboardScreen();
                   case Role.student:
                     return const StudentDashboardScreen();
                   default:
                     return RoleSelectionScreen();
                 }
-              } 
-              
+              }
+
               return RoleSelectionScreen();
             },
           );
         }
-        
+
         return RoleSelectionScreen();
       },
     );
