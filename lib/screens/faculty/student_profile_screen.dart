@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_doc/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smart_doc/models/document.dart' as doc;
+import 'package:url_launcher/url_launcher.dart';
 
 class StudentProfileScreen extends StatelessWidget {
   final User user;
@@ -14,91 +15,143 @@ class StudentProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(user.name ?? 'Student Profile'),
+        elevation: 0,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage(user.photoURL ?? ''),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  user.name ?? 'No Name',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${user.year ?? ''} - ${user.section ?? ''}',
-                  style: const TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                Text(
-                  '${user.department ?? ''}',
-                  style: const TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                Text(
-                  '${user.sapid ?? ''}',
-                  style: const TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                Text(
-                  '${user.enrollnment ?? ''}',
-                  style: const TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                Text(
-                  '${user.dob ?? ''}',
-                  style: const TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                 Text(
-                  '${user.email ?? ''}',
-                  style: const TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-
-
-              ],
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage(user.photoURL ?? ''),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user.name ?? 'No Name',
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${user.year ?? ''} - ${user.section ?? ''}',
+                    style: const TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ),
-          const Divider(),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Documents',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          SliverToBoxAdapter(
+            child: Card(
+              margin: const EdgeInsets.all(16.0),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow(Icons.school, 'Department', user.department),
+                    _buildDetailRow(Icons.badge, 'SAP ID', user.sapid),
+                    _buildDetailRow(Icons.confirmation_number, 'Enrollment', user.enrollnment),
+                    _buildDetailRow(Icons.cake, 'Date of Birth', user.dob),
+                    _buildDetailRow(Icons.email, 'Email', user.email),
+                  ],
+                ),
+              ),
             ),
           ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user.id)
-                  .collection('documents')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No documents found.'));
-                }
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                'Documents',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.id)
+                .collection('documents')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SliverToBoxAdapter(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text('No documents found.'),
+                    ),
+                  ),
+                );
+              }
 
-                return ListView.builder(
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
                     final docData = snapshot.data!.docs[index];
-                    final document = doc.Document.fromFirestore(docData.data() as Map<String, dynamic>, docData.id);
+                    final document = doc.Document.fromFirestore(
+                        docData.data() as Map<String, dynamic>, docData.id);
 
-                    return ListTile(
-                      leading: const Icon(Icons.description),
-                      title: Text(document.name ?? 'No Name'),
-                      onTap: () {
-                        // TODO: Handle document tap
-                      },
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 8.0),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListTile(
+                        leading: const Icon(Icons.description, color: Colors.blue),
+                        title: Text(document.name ?? 'No Name'),
+                        subtitle: Text('Type: ${document.type}'),
+                        onTap: () async {
+                          if (document.url != null) {
+                            final Uri url = Uri.parse(document.url!);
+                            if (!await launchUrl(url)) {
+                                throw Exception('Could not launch $url');
+                            }
+                          }
+                        },
+                      ),
                     );
                   },
-                );
-              },
+                  childCount: snapshot.data!.docs.length,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey),
+          const SizedBox(width: 16),
+          Text(
+            '$label:',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value ?? 'N/A',
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

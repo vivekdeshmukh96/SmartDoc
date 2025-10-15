@@ -17,6 +17,9 @@ class Document {
   final String? verificationDate;
   final String? comments;
   final String? downloadUrl;
+  final String? type;
+  final String? url;
+
 
   Document({
     required this.id,
@@ -30,6 +33,8 @@ class Document {
     this.verificationDate,
     this.comments,
     this.downloadUrl,
+    this.type,
+    this.url,
   });
 
   factory Document.fromFirestore(Map<String, dynamic> data, String documentId) {
@@ -48,6 +53,8 @@ class Document {
       verificationDate: data['verificationDate'],
       comments: data['comments'],
       downloadUrl: data['downloadUrl'],
+      type: data['type'],
+      url: data['url'],
     );
   }
 
@@ -63,6 +70,8 @@ class Document {
       'verificationDate': verificationDate,
       'comments': comments,
       'downloadUrl': downloadUrl,
+      'type': type,
+      'url': url,
     };
   }
 
@@ -78,6 +87,8 @@ class Document {
     String? verificationDate,
     String? comments,
     String? downloadUrl,
+    String? type,
+    String? url,
   }) {
     return Document(
       id: id ?? this.id,
@@ -91,6 +102,8 @@ class Document {
       verificationDate: verificationDate ?? this.verificationDate,
       comments: comments ?? this.comments,
       downloadUrl: downloadUrl ?? this.downloadUrl,
+      type: type ?? this.type,
+      url: url ?? this.url,
     );
   }
 }
