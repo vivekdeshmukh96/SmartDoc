@@ -2,7 +2,7 @@ import 'package:smart_doc/models/role.dart';
 
 class User {
   final String id;
-  final String name;
+  final String? name;
   final String email;
   final Role role;
   final String? rollNumber;
