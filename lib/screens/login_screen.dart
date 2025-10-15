@@ -84,71 +84,72 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (context) => const AuthWrapper()),
           );
         }
-      } else {
-        final UserCredential userCredential =
-            await _auth.signInWithEmailAndPassword(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
+        return;
+      } 
 
-        if (widget.role == Role.faculty) {
-          final DocumentSnapshot facultyDoc = await _firestore
-              .collection('faculty')
-              .doc(userCredential.user!.uid)
-              .get();
+      final UserCredential userCredential =
+          await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
 
-          if (!facultyDoc.exists) {
-            await _auth.signOut();
-            throw Exception('You are not registered as a faculty member.');
+      if (widget.role == Role.faculty) {
+        final DocumentSnapshot facultyDoc = await _firestore
+            .collection('faculty')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        if (!facultyDoc.exists) {
+          await _auth.signOut();
+          throw Exception('You are not registered as a faculty member.');
+        }
+
+        final String status = facultyDoc['status'];
+
+        if (status == 'pending') {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const FacultyWaitingScreen()),
+            );
           }
-
-          final String status = facultyDoc['status'];
-
-          if (status == 'pending') {
-            if (mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const FacultyWaitingScreen()),
-              );
-            }
-          } else if (status == 'approved') {
-            if (mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const AuthWrapper()),
-              );
-            }
-          } else {
-            await _auth.signOut();
-            throw Exception(
-                'Your registration has been denied or an error occurred.');
-          }
-        } else {
-          final DocumentSnapshot userDoc = await _firestore
-              .collection('users')
-              .doc(userCredential.user!.uid)
-              .get();
-
-          if (!userDoc.exists) {
-            throw Exception('User data not found.');
-          }
-
-          final String userRoleStr = userDoc['role'];
-          final Role userRole = Role.values
-              .firstWhere((e) => e.toString() == 'Role.$userRoleStr');
-
-          if (userRole != widget.role) {
-            await _auth.signOut();
-            throw Exception('Selected role does not match user account role.');
-          }
-
+        } else if (status == 'approved') {
           if (mounted) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const AuthWrapper()),
             );
           }
+        } else {
+          await _auth.signOut();
+          throw Exception(
+              'Your registration has been denied or an error occurred.');
+        }
+      } else {
+        final DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        if (!userDoc.exists) {
+          throw Exception('User data not found.');
+        }
+
+        final String userRoleStr = userDoc['role'];
+        final Role userRole = Role.values
+            .firstWhere((e) => e.toString() == 'Role.$userRoleStr');
+
+        if (userRole != widget.role) {
+          await _auth.signOut();
+          throw Exception('Selected role does not match user account role.');
+        }
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AuthWrapper()),
+          );
         }
       }
     } on FirebaseAuthException catch (e) {
