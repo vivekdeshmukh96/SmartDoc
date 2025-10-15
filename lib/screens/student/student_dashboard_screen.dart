@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../widgets/custom_app_bar.dart';
-import '../../widgets/custom_bottom_nav_bar.dart';
+import 'package:smart_doc/widgets/custom_app_bar.dart';
+import 'package:smart_doc/widgets/custom_bottom_nav_bar.dart';
 import 'student_home_tab.dart';
 import 'student_notifications_tab.dart';
 import 'student_profile_tab.dart';

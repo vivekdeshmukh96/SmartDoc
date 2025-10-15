@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:collegeapplication/services/firebase_service.dart';
-import 'package:collegeapplication/services/supabase_service.dart';
-import 'package:collegeapplication/widgets/message_box.dart';
+import 'package:smart_doc/services/firebase_service.dart';
+import 'package:smart_doc/services/supabase_service.dart';
+import 'package:smart_doc/widgets/message_box.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

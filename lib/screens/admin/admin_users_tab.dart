@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collegeapplication/models/role.dart';
-import 'package:collegeapplication/utils/string_extensions.dart';
+import 'package:smart_doc/models/role.dart';
+import 'package:smart_doc/utils/string_extensions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 

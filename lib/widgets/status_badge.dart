@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/document.dart';
+import 'package:smart_doc/models/document.dart';
 
 class StatusBadge extends StatelessWidget {
   final DocumentStatus status;

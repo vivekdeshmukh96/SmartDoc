@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collegeapplication/models/document.dart';
-import 'package:collegeapplication/utils/string_extensions.dart';
-import 'package:collegeapplication/widgets/document_card.dart';
-import 'package:collegeapplication/widgets/message_box.dart';
+import 'package:smart_doc/models/document.dart';
+import 'package:smart_doc/utils/string_extensions.dart';
+import 'package:smart_doc/widgets/document_card.dart';
+import 'package:smart_doc/widgets/message_box.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 

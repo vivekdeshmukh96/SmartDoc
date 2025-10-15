@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collegeapplication/models/document.dart';
+import 'package:smart_doc/models/document.dart';
 import 'package:flutter/material.dart';
 
 class AdminAnalyticsTab extends StatelessWidget {

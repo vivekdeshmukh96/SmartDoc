@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collegeapplication/models/document.dart';
-import 'package:collegeapplication/widgets/document_card.dart';
+import 'package:smart_doc/models/document.dart';
+import 'package:smart_doc/widgets/document_card.dart';
 import 'package:flutter/material.dart';
 
 class FacultyHomeTab extends StatelessWidget {

@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:collegeapplication/models/user.dart' as AppUser;
-import 'package:collegeapplication/services/supabase_service.dart';
+import 'package:smart_doc/models/user.dart' as AppUser;
+import 'package:smart_doc/services/supabase_service.dart';
 import '../../utils/string_extensions.dart';
 
 class StudentProfileTab extends StatefulWidget {

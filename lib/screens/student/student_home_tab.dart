@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collegeapplication/models/document.dart';
-import 'package:collegeapplication/screens/student/document_detail_screen.dart';
-import 'package:collegeapplication/services/document_storage_service.dart';
+import 'package:smart_doc/models/document.dart';
+import 'package:smart_doc/screens/student/document_detail_screen.dart';
+import 'package:smart_doc/services/document_storage_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';

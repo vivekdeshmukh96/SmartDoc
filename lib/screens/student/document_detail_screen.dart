@@ -1,4 +1,4 @@
-import 'package:collegeapplication/models/document.dart';
+import 'package:smart_doc/models/document.dart';
 import 'package:flutter/material.dart';
 import '../../extensions/string_extension.dart';
 

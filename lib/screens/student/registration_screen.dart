@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:collegeapplication/screens/student/student_dashboard_screen.dart';
+import 'package:smart_doc/screens/student/student_dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:collegeapplication/models/role.dart';
+import 'package:smart_doc/models/role.dart';
 
 class RegistrationScreen extends StatefulWidget {
   final Role role;
