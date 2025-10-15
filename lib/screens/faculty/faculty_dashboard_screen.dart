@@ -1,4 +1,4 @@
-azimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class FacultyDashboardScreen extends StatelessWidget {
   const FacultyDashboardScreen({super.key});
