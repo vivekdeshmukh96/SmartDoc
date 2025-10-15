@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:collegeapplication/services/firebase_service.dart';
+import 'package:smart_doc/services/firebase_service.dart';
 
 class FacultyRegistrationScreen extends StatefulWidget {
   const FacultyRegistrationScreen({super.key});

@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collegeapplication/models/role.dart';
-import 'package:collegeapplication/screens/faculty/faculty_registration_screen.dart';
-import 'package:collegeapplication/screens/faculty/faculty_waiting_screen.dart';
-import 'package:collegeapplication/screens/student/registration_screen.dart';
-import 'package:collegeapplication/widgets/message_box.dart';
+import 'package:smart_doc/models/role.dart';
+import 'package:smart_doc/screens/faculty/faculty_registration_screen.dart';
+import 'package:smart_doc/screens/faculty/faculty_waiting_screen.dart';
+import 'package:smart_doc/screens/student/registration_screen.dart';
+import 'package:smart_doc/widgets/message_box.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/string_extensions.dart';

@@ -1,4 +1,4 @@
-import 'package:collegeapplication/models/role.dart';
+import 'package:smart_doc/models/role.dart';
 
 class User {
   final String id;

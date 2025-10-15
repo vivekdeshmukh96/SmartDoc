@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collegeapplication/screens/admin/admin_verification_tab.dart';
+import 'package:smart_doc/screens/admin/admin_verification_tab.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 

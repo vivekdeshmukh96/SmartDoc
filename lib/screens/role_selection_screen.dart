@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:collegeapplication/screens/login_screen.dart';
-import 'package:collegeapplication/models/role.dart';
+import 'package:smart_doc/screens/login_screen.dart';
+import 'package:smart_doc/models/role.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
