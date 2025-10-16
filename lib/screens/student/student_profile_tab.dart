@@ -88,112 +88,112 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading && _currentUser == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_currentUser == null) {
-      return const Center(child: Text('Not logged in.'));
-    }
-
     return Scaffold(
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildProfileHeader(context, _currentUser),
-                const SizedBox(height: 30),
-                _buildProfileInfoCard(_currentUser),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Navigate to an edit profile screen
-                  },
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Edit Profile'),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+      body: _isLoading && _currentUser == null
+          ? const Center(child: CircularProgressIndicator())
+          : _currentUser == null
+              ? const Center(child: Text('Not logged in.'))
+              : CustomScrollView(
+                  slivers: [
+                    SliverAppBar(
+                      expandedHeight: 250.0,
+                      pinned: true,
+                      floating: false,
+                      backgroundColor: Colors.white,
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: _buildProfileHeader(context, _currentUser),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: _buildProfileInfoCard(_currentUser),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                        child: ElevatedButton.icon(
+                          onPressed: () => _logout(context),
+                          icon: const Icon(Icons.logout, color: Colors.white),
+                          label: const Text('Logout', style: TextStyle(color: Colors.white, fontSize: 16)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => _logout(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Logout', style: TextStyle(fontSize: 18)),
-                ),
-              ],
-            ),
-          ),
-          if (_isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-        ],
-      ),
     );
   }
 
   Widget _buildProfileHeader(BuildContext context, AppUser.User? currentUser) {
-    return Column(
-      children: [
-        Stack(
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade300, Colors.blue.shade500],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.white,
-              backgroundImage: (currentUser?.photoURL != null && currentUser!.photoURL!.isNotEmpty)
-                  ? NetworkImage(currentUser.photoURL!)
-                  : null,
-              child: (currentUser?.photoURL == null || currentUser!.photoURL!.isEmpty)
-                  ? const Icon(Icons.person, size: 80, color: Colors.blueAccent)
-                  : null,
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Material(
-                color: Colors.blueAccent,
-                shape: const CircleBorder(),
-                child: InkWell(
-                  onTap: _pickAndUploadImage,
-                  customBorder: const CircleBorder(),
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Icon(Icons.edit, color: Colors.white, size: 20),
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 60,
+                  backgroundColor: Colors.white,
+                  backgroundImage: (currentUser?.photoURL != null && currentUser!.photoURL!.isNotEmpty)
+                      ? NetworkImage(currentUser.photoURL!)
+                      : null,
+                  child: (currentUser?.photoURL == null || currentUser!.photoURL!.isEmpty)
+                      ? const Icon(Icons.person, size: 80, color: Colors.blueAccent)
+                      : null,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Material(
+                    color: Colors.amber,
+                    shape: const CircleBorder(),
+                    elevation: 4,
+                    child: InkWell(
+                      onTap: _pickAndUploadImage,
+                      customBorder: const CircleBorder(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(Icons.edit, color: Colors.black, size: 20),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              currentUser?.name ?? 'N/A',
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              currentUser?.role.toString().split('.').last.capitalize() ?? 'N/A',
+              style: TextStyle(fontSize: 18, color: Colors.white.withOpacity(0.9)),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Text(
-          currentUser?.name ?? 'N/A',
-          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          currentUser?.role.toString().split('.').last.capitalize() ?? 'N/A',
-          style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
-        ),
-      ],
+      ),
     );
+  }
   }
 
   Widget _buildProfileInfoCard(AppUser.User? currentUser) {
     return Card(
-      elevation: 6,
+      elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -206,8 +206,11 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
             ),
             const Divider(height: 30, thickness: 1),
             _buildInfoRow(Icons.email, 'Email', currentUser?.email ?? 'N/A'),
-            _buildInfoRow(Icons.school, 'Roll Number', currentUser?.rollNumber ?? 'N/A'),
-            _buildInfoRow(Icons.class_, 'Class', currentUser?.className ?? 'N/A'),
+            _buildInfoRow(Icons.credit_card, 'Student ID', currentUser?.studentId ?? 'N/A'),
+            _buildInfoRow(Icons.calendar_today, 'Year', currentUser?.year ?? 'N/A'),
+            _buildInfoRow(Icons.class_, 'Section', currentUser?.section ?? 'N/A'),
+            _buildInfoRow(Icons.school, 'Department', currentUser?.department ?? 'N/A'),
+            _buildInfoRow(Icons.phone, 'Contact No', currentUser?.contactNo ?? 'N/A'),
           ],
         ),
       ),
