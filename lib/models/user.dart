@@ -11,9 +11,9 @@ class User {
   final String? year;
   final String? section;
   final String? department;
-  final String? studentId;
+  final String? sapid;
+  final String? enrollnment;
   final String? dob;
-  final String? contactNo;
 
   User({
     required this.id,
@@ -26,9 +26,9 @@ class User {
     this.year,
     this.section,
     this.department,
-    this.studentId,
+    this.sapid,
+    this.enrollnment,
     this.dob,
-    this.contactNo,
   });
 
   factory User.fromFirestore(Map<String, dynamic> data, String id) {
@@ -42,10 +42,10 @@ class User {
       photoURL: data['photoURL'],
       year: data['year'],
       section: data['section'],
-      department: data['Department'],
-      studentId: data['studentId'],
-      dob: data['DoB'],
-      contactNo: data['ContactNo'],
+      department: data['department'],
+      sapid: data['sapid'],
+      enrollnment: data['enrollnment'],
+      dob: data['dob'],
     );
   }
 
@@ -59,10 +59,10 @@ class User {
       'photoURL': photoURL,
       'year': year,
       'section': section,
-      'Department': department,
-      'studentId': studentId,
-      'DoB': dob,
-      'ContactNo': contactNo,
+      'department': department,
+      'sapid': sapid,
+      'enrollnment': enrollnment,
+      'dob': dob,
     };
   }
 
@@ -77,9 +77,9 @@ class User {
     String? year,
     String? section,
     String? department,
-    String? studentId,
+    String? sapid,
+    String? enrollnment,
     String? dob,
-    String? contactNo,
   }) {
     return User(
       id: id ?? this.id,
@@ -92,9 +92,9 @@ class User {
       year: year ?? this.year,
       section: section ?? this.section,
       department: department ?? this.department,
-      studentId: studentId ?? this.studentId,
+      sapid: sapid ?? this.sapid,
+      enrollnment: enrollnment ?? this.enrollnment,
       dob: dob ?? this.dob,
-      contactNo: contactNo ?? this.contactNo,
     );
   }
 }
