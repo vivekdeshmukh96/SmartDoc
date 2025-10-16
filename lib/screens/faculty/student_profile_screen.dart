@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:smart_doc/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,56 +12,21 @@ class StudentProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(user.name ?? 'Student Profile'),
-        elevation: 0,
-      ),
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(user.photoURL ?? ''),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    user.name ?? 'No Name',
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${user.year ?? ''} - ${user.section ?? ''}',
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
-              ),
+          SliverAppBar(
+            expandedHeight: 250.0,
+            pinned: true,
+            floating: false,
+            backgroundColor: Colors.white,
+            flexibleSpace: FlexibleSpaceBar(
+              background: _buildProfileHeader(context, user),
             ),
           ),
           SliverToBoxAdapter(
-            child: Card(
-              margin: const EdgeInsets.all(16.0),
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDetailRow(Icons.school, 'Department', user.department),
-                    _buildDetailRow(Icons.badge, 'SAP ID', user.sapid),
-                    _buildDetailRow(Icons.confirmation_number, 'Enrollment', user.enrollnment),
-                    _buildDetailRow(Icons.cake, 'Date of Birth', user.dob),
-                    _buildDetailRow(Icons.email, 'Email', user.email),
-                  ],
-                ),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildProfileInfoCard(user),
             ),
           ),
           const SliverToBoxAdapter(
@@ -74,88 +38,159 @@ class StudentProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.id)
-                .collection('documents')
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverToBoxAdapter(
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text('No documents found.'),
-                    ),
-                  ),
-                );
-              }
+          _buildDocumentList(user.id),
+        ],
+      ),
+    );
+  }
 
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final docData = snapshot.data!.docs[index];
-                    final document = doc.Document.fromFirestore(
-                        docData.data() as Map<String, dynamic>, docData.id);
+  Widget _buildProfileHeader(BuildContext context, User user) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade300, Colors.blue.shade500],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.white,
+              backgroundImage: (user.photoURL != null && user.photoURL!.isNotEmpty)
+                  ? NetworkImage(user.photoURL!)
+                  : null,
+              child: (user.photoURL == null || user.photoURL!.isEmpty)
+                  ? const Icon(Icons.person, size: 80, color: Colors.blueAccent)
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              user.name ?? 'N/A',
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              user.email,
+              style: TextStyle(fontSize: 18, color: Colors.white.withOpacity(0.9)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 8.0),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: ListTile(
-                        leading: const Icon(Icons.description, color: Colors.blue),
-                        title: Text(document.name ?? 'No Name'),
-                        subtitle: Text('Type: ${document.type}'),
-                        onTap: () async {
-                          if (document.url != null) {
-                            final Uri url = Uri.parse(document.url!);
-                            if (!await launchUrl(url)) {
-                                throw Exception('Could not launch $url');
-                            }
-                          }
-                        },
-                      ),
-                    );
-                  },
-                  childCount: snapshot.data!.docs.length,
-                ),
-              );
-            },
+  Widget _buildProfileInfoCard(User user) {
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Student Information',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+            ),
+            const Divider(height: 30, thickness: 1),
+            _buildInfoRow(Icons.credit_card, 'Student ID', user.studentId ?? 'N/A'),
+            _buildInfoRow(Icons.calendar_today, 'Year', user.year ?? 'N/A'),
+            _buildInfoRow(Icons.class_, 'Section', user.section ?? 'N/A'),
+            _buildInfoRow(Icons.school, 'Department', user.department ?? 'N/A'),
+            _buildInfoRow(Icons.phone, 'Contact No', user.contactNo ?? 'N/A'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueGrey, size: 28),
+          const SizedBox(width: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String? value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey),
-          const SizedBox(width: 16),
-          Text(
-            '$label:',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value ?? 'N/A',
-              overflow: TextOverflow.ellipsis,
+  Widget _buildDocumentList(String userId) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('documents')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SliverToBoxAdapter(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('No documents found.'),
+              ),
             ),
+          );
+        }
+
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final docData = snapshot.data!.docs[index];
+              final document = doc.Document.fromFirestore(
+                  docData.data() as Map<String, dynamic>, docData.id);
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.description, color: Colors.blue),
+                  title: Text(document.name ?? 'No Name'),
+                  subtitle: Text('Type: ${document.type}'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () async {
+                    if (document.url != null) {
+                      final Uri url = Uri.parse(document.url!);
+                      if (!await launchUrl(url)) {
+                        throw Exception('Could not launch $url');
+                      }
+                    }
+                  },
+                ),
+              );
+            },
+            childCount: snapshot.data!.docs.length,
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
