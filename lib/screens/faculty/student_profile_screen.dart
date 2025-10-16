@@ -55,11 +55,11 @@ class StudentProfileScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildDetailRow(Icons.badge, 'Student ID', user.studentId),
+                    _buildDetailRow(Icons.calendar_today, 'Year', user.year),
+                    _buildDetailRow(Icons.class_, 'Section', user.section),
                     _buildDetailRow(Icons.school, 'Department', user.department),
-                    _buildDetailRow(Icons.badge, 'SAP ID', user.sapid),
-                    _buildDetailRow(Icons.confirmation_number, 'Enrollment', user.enrollnment),
-                    _buildDetailRow(Icons.cake, 'Date of Birth', user.dob),
-                    _buildDetailRow(Icons.email, 'Email', user.email),
+                    _buildDetailRow(Icons.phone, 'Contact No', user.contactNo),
                   ],
                 ),
               ),
