@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smart_doc/models/role.dart';
 
 class User {
@@ -44,7 +45,7 @@ class User {
       section: data['section'],
       department: data['Department'],
       studentId: data['studentId'],
-      dob: data['DoB'],
+      dob: data['DoB'] is Timestamp ? (data['DoB'] as Timestamp).toDate().toString().substring(0, 10) : data['DoB'],
       contactNo: data['ContactNo'],
     );
   }

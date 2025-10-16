@@ -240,4 +240,3 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
       ),
     );
   }
-}
