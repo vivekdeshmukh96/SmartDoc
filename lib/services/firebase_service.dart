@@ -28,6 +28,8 @@ class FirebaseService {
       );
 
       await _firestore
+          .collection('users')
+          .doc(user.uid)
           .collection('documents')
           .add(document.toFirestore());
     } catch (e) {
