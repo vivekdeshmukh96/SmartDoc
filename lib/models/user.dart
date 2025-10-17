@@ -15,6 +15,7 @@ class User {
   final String? studentId;
   final String? dob;
   final String? contactNo;
+  final String? parentContactNo;
 
   User({
     required this.id,
@@ -30,6 +31,7 @@ class User {
     this.studentId,
     this.dob,
     this.contactNo,
+    this.parentContactNo,
   });
 
   factory User.fromFirestore(Map<String, dynamic> data, String id) {
@@ -48,6 +50,7 @@ class User {
       studentId: data['studentId'],
       dob: dobValue is Timestamp ? dobValue.toDate().toString().substring(0, 10) : dobValue,
       contactNo: data['ContactNo'] ?? data['contactNo'],
+      parentContactNo: data['ParentContactNo'] ?? data['parentContactNo'],
     );
   }
 
@@ -65,6 +68,7 @@ class User {
       'studentId': studentId,
       'DoB': dob,
       'ContactNo': contactNo,
+      'ParentContactNo': parentContactNo,
     };
   }
 
@@ -82,6 +86,7 @@ class User {
     String? studentId,
     String? dob,
     String? contactNo,
+    String? parentContactNo,
   }) {
     return User(
       id: id ?? this.id,
@@ -97,6 +102,7 @@ class User {
       studentId: studentId ?? this.studentId,
       dob: dob ?? this.dob,
       contactNo: contactNo ?? this.contactNo,
+      parentContactNo: parentContactNo ?? this.parentContactNo,
     );
   }
 

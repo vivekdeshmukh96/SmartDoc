@@ -209,6 +209,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
             _buildInfoRow(Icons.class_, 'Section', currentUser?.section ?? 'N/A'),
             _buildInfoRow(Icons.school, 'Department', currentUser?.department ?? 'N/A'),
             _buildInfoRow(Icons.phone, 'Contact No', currentUser?.contactNo ?? 'N/A'),
+            _buildInfoRow(Icons.phone, 'Parent Contact No', currentUser?.parentContactNo ?? 'N/A'),
           ],
         ),
       ),
