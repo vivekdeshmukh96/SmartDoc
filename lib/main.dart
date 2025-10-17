@@ -1,10 +1,10 @@
+import 'package:smart_doc/screens/splash_screen.dart';
 import 'package:smart_doc/supabase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'firebase_options.dart';
-import 'screens/common/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const AuthWrapper(),
+      home: const SplashScreen(),
     );
   }
 }

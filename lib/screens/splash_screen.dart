@@ -1,58 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:animated_splash_screen/animated_splash_screen.dart';
+import 'package:smart_doc/screens/auth_screen.dart'; // your main screen
+import 'package:lottie/lottie.dart';
 
-import 'login_screen.dart';
-
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _navigateToLogin();
-  }
-
-  _navigateToLogin() async {
-    await Future.delayed(const Duration(seconds: 3), () {}); // Simulate loading time
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blueAccent, Colors.indigoAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/logo.jpg',
-                height: 150,
-              ),
-              const SizedBox(height: 50),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ],
-          ),
-        ),
+    return AnimatedSplashScreen(
+      duration: 3000, // 3 seconds
+      splash: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset('assets/images/logo.png', height: 120),
+          const SizedBox(height: 20),
+          Lottie.asset('assets/loader.json', height: 100), // optional animation
+        ],
       ),
+      nextScreen: const AuthScreen(),
+      splashTransition: SplashTransition.fadeTransition,
+      backgroundColor: Colors.white,
     );
   }
 }
