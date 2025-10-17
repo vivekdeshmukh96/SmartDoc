@@ -38,7 +38,7 @@ class User {
       id: id,
       name: data['studentName'] ?? data['name'],
       email: data['email'] ?? data['email11'] ?? '',
-      role: Role.values.firstWhere((e) => e.name == data['role']),
+      role: Role.values.firstWhere((e) => e.name == data['role'], orElse: () => Role.student),
       rollNumber: data['rollNumber'],
       className: data['className'],
       photoURL: data['photoURL'],

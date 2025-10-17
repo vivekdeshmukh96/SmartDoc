@@ -110,6 +110,11 @@ class _LoginScreenState extends State<LoginScreen> {
         Provider.of<UserProvider>(context, listen: false).setUser(user);
       }
 
+      if (user.role != widget.role) {
+        await _auth.signOut();
+        throw Exception('Selected role does not match user account role.');
+      }
+
       if (widget.role == Role.faculty) {
         final DocumentSnapshot facultyDoc = await _firestore
             .collection('faculty')
@@ -146,15 +151,6 @@ class _LoginScreenState extends State<LoginScreen> {
               'Your registration has been denied or an error occurred.');
         }
       } else {
-        final String userRoleStr = userDoc['role'];
-        final Role userRole =
-            Role.values.firstWhere((e) => e.toString() == 'Role.$userRoleStr');
-
-        if (userRole != widget.role) {
-          await _auth.signOut();
-          throw Exception('Selected role does not match user account role.');
-        }
-
         if (mounted) {
           Navigator.pushReplacement(
             context,

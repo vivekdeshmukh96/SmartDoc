@@ -1,75 +1,75 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
-
-import '../models/document_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:smart_doc/models/document.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DocumentStorageService {
-  static const _documentsKey = 'documents';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  Future<Directory> get _documentsDir async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final docsDir = Directory(path.join(appDir.path, 'documents'));
-    if (!await docsDir.exists()) {
-      await docsDir.create(recursive: true);
+  Stream<List<Document>> getDocuments() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Stream.value([]);
     }
-    return docsDir;
+    return _firestore
+        .collection('documents')
+        .where('uploadedByUserId', isEqualTo: user.uid)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => Document.fromFirestore(doc.data(), doc.id))
+          .toList();
+    });
   }
 
-  Future<List<Document>> getDocuments() async {
-    final prefs = await SharedPreferences.getInstance();
-    final documentsJson = prefs.getStringList(_documentsKey) ?? [];
-    return documentsJson
-        .map((docJson) => Document.fromJson(docJson))
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  }
-
-  Future<void> saveDocument(String tempPath) async {
-    final docsDir = await _documentsDir;
-    final fileName = '${const Uuid().v4()}.jpg';
-    final newPath = path.join(docsDir.path, fileName);
-
-    final tempFile = File(tempPath);
-    if (await tempFile.exists()) {
-      await tempFile.copy(newPath);
+  Future<void> saveDocument(
+      File file, String name, String category, String fileType) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('User not logged in');
     }
+
+    final fileName = '${user.uid}/${DateTime.now().millisecondsSinceEpoch}.$fileType';
+
+    final response = await _supabase.storage.from('documents').upload(
+          fileName,
+          file,
+          fileOptions: FileOptions(cacheControl: '3600', upsert: false),
+        );
+
+    final downloadUrl = _supabase.storage.from('documents').getPublicUrl(fileName);
+
+    final docRef = _firestore.collection('documents').doc();
 
     final document = Document(
-      id: const Uuid().v4(),
-      filePath: newPath,
-      createdAt: DateTime.now(),
+      id: docRef.id,
+      name: name,
+      category: category,
+      fileType: fileType,
+      uploadedByUserId: user.uid,
+      uploadedDate: DateTime.now().toIso8601String(),
+      downloadUrl: downloadUrl,
     );
 
-    final prefs = await SharedPreferences.getInstance();
-    final documents = await getDocuments();
-    documents.add(document);
-
-    await prefs.setStringList(
-      _documentsKey,
-      documents.map((doc) => doc.toJson()).toList(),
-    );
+    await docRef.set(document.toFirestore());
   }
 
   Future<void> deleteDocument(String documentId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final documents = await getDocuments();
+    final docRef = _firestore.collection('documents').doc(documentId);
+    final docSnapshot = await docRef.get();
+    final document = Document.fromFirestore(docSnapshot.data()!, docSnapshot.id);
 
-    final docToDelete = documents.firstWhere((doc) => doc.id == documentId);
-    final file = File(docToDelete.filePath);
-
-    if (await file.exists()) {
-      await file.delete();
+    if (document.downloadUrl != null) {
+      final path = Uri.parse(document.downloadUrl!).pathSegments.last;
+      try {
+        await _supabase.storage.from('documents').remove([path]);
+      } catch (e) {
+        print('Error deleting from Supabase: $e');
+      }
     }
 
-    documents.removeWhere((doc) => doc.id == documentId);
-
-    await prefs.setStringList(
-      _documentsKey,
-      documents.map((doc) => doc.toJson()).toList(),
-    );
+    await docRef.delete();
   }
 }
