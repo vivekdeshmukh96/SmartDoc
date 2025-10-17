@@ -14,8 +14,9 @@ class DocumentStorageService {
       return Stream.value([]);
     }
     return _firestore
+        .collection('users')
+        .doc(user.uid)
         .collection('documents')
-        .where('uploadedByUserId', isEqualTo: user.uid)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
@@ -41,7 +42,7 @@ class DocumentStorageService {
 
     final downloadUrl = _supabase.storage.from('documents').getPublicUrl(fileName);
 
-    final docRef = _firestore.collection('documents').doc();
+    final docRef = _firestore.collection('users').doc(user.uid).collection('documents').doc();
 
     final document = Document(
       id: docRef.id,
@@ -57,7 +58,11 @@ class DocumentStorageService {
   }
 
   Future<void> deleteDocument(String documentId) async {
-    final docRef = _firestore.collection('documents').doc(documentId);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+    final docRef = _firestore.collection('users').doc(user.uid).collection('documents').doc(documentId);
     final docSnapshot = await docRef.get();
     final document = Document.fromFirestore(docSnapshot.data()!, docSnapshot.id);
 
