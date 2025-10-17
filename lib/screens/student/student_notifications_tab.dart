@@ -19,7 +19,7 @@ class _StudentNotificationsTabState extends State<StudentNotificationsTab> {
     final studentId = FirebaseAuth.instance.currentUser!.uid;
     _notificationStream = FirebaseFirestore.instance
         .collection('notifications')
-        .where('target', 'in', ['all', studentId])
+        .where('target', whereIn: ['all', studentId])
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
