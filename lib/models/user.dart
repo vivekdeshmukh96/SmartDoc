@@ -34,44 +34,46 @@ class User {
 
   factory User.fromSnap(DocumentSnapshot snap) {
     var snapshot = snap.data() as Map<String, dynamic>;
+    final dobValue = snapshot['DoB'] ?? snapshot['dob'];
     return User(
       id: snap.id,
-      name: snapshot['name'],
-      email: snapshot['email'],
+      name: snapshot['studentName'] ?? snapshot['name'],
+      email: snapshot['email'] ?? snapshot['email11'] ?? '',
       role: Role.values.firstWhere((e) => e.name == snapshot['role']),
       rollNumber: snapshot['rollNumber'],
       className: snapshot['className'],
       photoURL: snapshot['photoURL'],
       year: snapshot['year'],
       section: snapshot['section'],
-      department: snapshot['department'],
+      department: snapshot['Department'] ?? snapshot['department'],
       studentId: snapshot['studentId'],
-      dob: snapshot['dob'] is Timestamp ? (snapshot['dob'] as Timestamp).toDate().toString().substring(0, 10) : snapshot['dob'],
-      contactNo: snapshot['contactNo'],
+      dob: dobValue is Timestamp ? dobValue.toDate().toString().substring(0, 10) : dobValue,
+      contactNo: snapshot['ContactNo'] ?? snapshot['contactNo'],
     );
   }
 
   factory User.fromFirestore(Map<String, dynamic> data, String id) {
+    final dobValue = data['DoB'] ?? data['dob'];
     return User(
       id: id,
-      name: data['name'],
-      email: data['email'],
+      name: data['studentName'] ?? data['name'],
+      email: data['email'] ?? data['email11'] ?? '',
       role: Role.values.firstWhere((e) => e.name == data['role']),
       rollNumber: data['rollNumber'],
       className: data['className'],
       photoURL: data['photoURL'],
       year: data['year'],
       section: data['section'],
-      department: data['department'],
+      department: data['Department'] ?? data['department'],
       studentId: data['studentId'],
-      dob: data['dob'] is Timestamp ? (data['dob'] as Timestamp).toDate().toString().substring(0, 10) : data['dob'],
-      contactNo: data['contactNo'],
+      dob: dobValue is Timestamp ? dobValue.toDate().toString().substring(0, 10) : dobValue,
+      contactNo: data['ContactNo'] ?? data['contactNo'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'name': name,
+      'studentName': name,
       'email': email,
       'role': role.name,
       'rollNumber': rollNumber,
@@ -79,10 +81,10 @@ class User {
       'photoURL': photoURL,
       'year': year,
       'section': section,
-      'department': department,
+      'Department': department,
       'studentId': studentId,
-      'dob': dob,
-      'contactNo': contactNo,
+      'DoB': dob,
+      'ContactNo': contactNo,
     };
   }
 

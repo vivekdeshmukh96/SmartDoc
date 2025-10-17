@@ -121,9 +121,11 @@ class _LoginScreenState extends State<LoginScreen> {
           throw Exception('You are not registered as a faculty member.');
         }
 
-        final String status = facultyDoc['status'];
+        final facultyData = facultyDoc.data() as Map<String, dynamic>?;
+        final status = facultyData?['status'];
+        final String statusString = status is String ? status : '';
 
-        if (status == 'pending') {
+        if (statusString == 'pending') {
           if (mounted) {
             Navigator.pushReplacement(
               context,
@@ -131,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   builder: (context) => const FacultyWaitingScreen()),
             );
           }
-        } else if (status == 'approved') {
+        } else if (statusString == 'approved') {
           if (mounted) {
             Navigator.pushReplacement(
               context,
