@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smart_doc/models/document.dart';
 import 'package:smart_doc/providers/user_provider.dart';
+import 'package:smart_doc/services/document_storage_service.dart';
 import 'package:smart_doc/widgets/custom_app_bar.dart';
 import 'package:smart_doc/widgets/custom_bottom_nav_bar.dart';
 import 'student_home_tab.dart';
@@ -35,37 +37,41 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserProvider>(context).user;
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Welcome, ${user?.name ?? 'Student'}!',
-        showLogout: true,
-      ),
-      body: _widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.cloud_upload),
-            label: 'Upload',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+    return StreamProvider<List<Document>>.value(
+      value: DocumentStorageService().getDocuments(),
+      initialData: const [],
+      child: Scaffold(
+        appBar: CustomAppBar(
+          title: 'Welcome, ${user?.name ?? 'Student'}!',
+          showLogout: true,
+        ),
+        body: _widgetOptions.elementAt(_selectedIndex),
+        bottomNavigationBar: CustomBottomNavBar(
+          selectedIndex: _selectedIndex,
+          onItemTapped: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.cloud_upload),
+              label: 'Upload',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'Notifications',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
