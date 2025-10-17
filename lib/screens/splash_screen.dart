@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:animated_splash_screen/animated_splash_screen.dart';
-import 'package:smart_doc/screens/auth_screen.dart'; // your main screen
+import 'package:smart_doc/screens/role_selection_screen.dart';
 import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -18,7 +18,7 @@ class SplashScreen extends StatelessWidget {
           Lottie.asset('assets/loader.json', height: 100), // optional animation
         ],
       ),
-      nextScreen: const AuthScreen(),
+      nextScreen: const RoleSelectionScreen(),
       splashTransition: SplashTransition.fadeTransition,
       backgroundColor: Colors.white,
     );

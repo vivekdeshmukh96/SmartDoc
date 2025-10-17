@@ -12,37 +12,41 @@ class RoleSelectionScreen extends StatelessWidget {
         title: const Text('Select Your Role'),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              child: const Text('Student'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.student)),
-                );
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Faculty'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.faculty)),
-                );
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Admin'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.admin)),
-                );
-              },
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ElevatedButton(
+                child: const Text('Student'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.student)),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                child: const Text('Faculty'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.faculty)),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                child: const Text('Admin'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen(role: Role.admin)),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
