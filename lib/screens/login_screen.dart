@@ -96,25 +96,6 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
-      final DocumentSnapshot userDoc = await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .get();
-
-      if (!userDoc.exists) {
-        throw Exception('User data not found.');
-      }
-
-      final user = model.User.fromFirestore(userDoc.data() as Map<String, dynamic>, userDoc.id);
-      if (mounted) {
-        Provider.of<UserProvider>(context, listen: false).setUser(user);
-      }
-
-      if (user.role != widget.role) {
-        await _auth.signOut();
-        throw Exception('Selected role does not match user account role.');
-      }
-
       if (widget.role == Role.faculty) {
         final DocumentSnapshot facultyDoc = await _firestore
             .collection('faculty')
@@ -151,11 +132,31 @@ class _LoginScreenState extends State<LoginScreen> {
               'Your registration has been denied or an error occurred.');
         }
       } else {
+        final DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        if (!userDoc.exists) {
+          throw Exception('User data not found.');
+        }
+
+        final user = model.User.fromFirestore(
+            userDoc.data() as Map<String, dynamic>, userDoc.id);
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AuthWrapper()),
-          );
+          Provider.of<UserProvider>(context, listen: false).setUser(user);
+        }
+
+        if (user.role != widget.role) {
+          await _auth.signOut();
+          throw Exception('Selected role does not match user account role.');
+        } else {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AuthWrapper()),
+            );
+          }
         }
       }
     } on FirebaseAuthException catch (e) {
