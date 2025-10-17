@@ -140,7 +140,8 @@ class StudentProfileScreen extends StatelessWidget {
   Widget _buildDocumentList(String userId) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('users')
+          .collection('users
+')
           .doc(userId)
           .collection('documents')
           .snapshots(),
@@ -177,7 +178,7 @@ class StudentProfileScreen extends StatelessWidget {
                 child: ListTile(
                   leading: const Icon(Icons.description, color: Colors.blue),
                   title: Text(document.name ?? 'No Name'),
-                  subtitle: Text('Type: ${document.type}'),
+                  subtitle: Text('Status: ${document.status}'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () async {
                     if (document.url != null) {
