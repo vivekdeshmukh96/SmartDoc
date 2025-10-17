@@ -9,14 +9,16 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSplashScreen(
-      duration: 3000, // 3 seconds
-      splash: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset('assets/images/logo.png', height: 120),
-          const SizedBox(height: 20),
-          Lottie.asset('assets/loader.json', height: 100), // optional animation
-        ],
+      duration: 3000,
+      splash: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/images/logo.png', height: 120),
+            const SizedBox(height: 20),
+            Lottie.asset('assets/loader.json', height: 100),
+          ],
+        ),
       ),
       nextScreen: const RoleSelectionScreen(),
       splashTransition: SplashTransition.fadeTransition,
