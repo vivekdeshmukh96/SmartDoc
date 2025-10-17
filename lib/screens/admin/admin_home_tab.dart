@@ -30,7 +30,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
       final usersSnapshot = await FirebaseFirestore.instance.collection('users').get();
       final documentsSnapshot = await FirebaseFirestore.instance.collection('documents').orderBy('uploadedAt', descending: true).limit(5).get();
 
-      final users = usersSnapshot.docs.map((doc) => user_model.User.fromSnap(doc)).toList();
+      final users = usersSnapshot.docs.map((doc) => user_model.User.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
       final roles = <String, int>{};
       for (var user in users) {
         final roleName = user.role.name;
@@ -41,7 +41,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
         setState(() {
           _userCount = usersSnapshot.size;
           _documentCount = documentsSnapshot.size;
-          _recentDocuments = documentsSnapshot.docs.map((doc) => doc_model.Document.fromSnap(doc)).toList();
+          _recentDocuments = documentsSnapshot.docs.map((doc) => doc_model.Document.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
           _userRoleDistribution = roles;
           _isLoading = false;
         });
