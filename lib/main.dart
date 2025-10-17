@@ -89,10 +89,6 @@ class _MyAppState extends State<MyApp> {
       if (user != null && token != null) {
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'fcmToken': token,
-          // Add other user details if not already present
-          'uid': user.uid,
-          'name': user.displayName ?? 'N/A', // Assuming display name is available
-          'role': 'student', // Default role, adjust as needed
         }, SetOptions(merge: true));
         print('FCM Token saved for user: ${user.uid}');
       }

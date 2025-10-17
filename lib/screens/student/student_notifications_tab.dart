@@ -20,7 +20,7 @@ class _StudentNotificationsTabState extends State<StudentNotificationsTab> {
     _notificationStream = FirebaseFirestore.instance
         .collection('notifications')
         .where('target', whereIn: ['all', studentId])
-        .orderBy('timestamp', descending: true)
+        // .orderBy('timestamp', descending: true) // Removed to avoid composite index
         .snapshots();
   }
 
@@ -41,6 +41,9 @@ class _StudentNotificationsTabState extends State<StudentNotificationsTab> {
           final data = doc.data() as Map<String, dynamic>;
           return model.Notification.fromFirestore(data, doc.id);
         }).toList();
+
+        // Sort notifications by timestamp on the client-side
+        notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
         if (notifications.isEmpty) {
           return const Center(child: Text('You have no notifications.'));
