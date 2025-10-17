@@ -43,10 +43,10 @@ class User {
       photoURL: data['photoURL'],
       year: data['year'],
       section: data['section'],
-      department: data['Department'],
+      department: data['department'],
       studentId: data['studentId'],
-      dob: data['DoB'] is Timestamp ? (data['DoB'] as Timestamp).toDate().toString().substring(0, 10) : data['DoB'],
-      contactNo: data['ContactNo'],
+      dob: data['dob'] is Timestamp ? (data['dob'] as Timestamp).toDate().toString().substring(0, 10) : data['dob'],
+      contactNo: data['contactNo'],
     );
   }
 
@@ -60,10 +60,10 @@ class User {
       'photoURL': photoURL,
       'year': year,
       'section': section,
-      'Department': department,
+      'department': department,
       'studentId': studentId,
-      'DoB': dob,
-      'ContactNo': contactNo,
+      'dob': dob,
+      'contactNo': contactNo,
     };
   }
 

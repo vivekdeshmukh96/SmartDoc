@@ -11,13 +11,15 @@ class SplashScreen extends StatelessWidget {
     return AnimatedSplashScreen(
       duration: 3000,
       splash: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/images/logo.png', height: 120),
-            const SizedBox(height: 20),
-            Lottie.asset('assets/loader.json', height: 100),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('assets/images/logo.png', height: 120),
+              const SizedBox(height: 20),
+              Lottie.asset('assets/loader.json', height: 100),
+            ],
+          ),
         ),
       ),
       nextScreen: const RoleSelectionScreen(),

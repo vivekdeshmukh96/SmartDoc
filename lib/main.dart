@@ -2,7 +2,7 @@ import 'package:smart_doc/screens/splash_screen.dart';
 import 'package:smart_doc/supabase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,7 +22,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await Supabase.initialize(
+  await supabase.Supabase.initialize(
     url: SupabaseOptions.url,
     anonKey: SupabaseOptions.anonKey,
   );
@@ -114,6 +114,7 @@ class _MyAppState extends State<MyApp> {
         primarySwatch: Colors.blue,
       ),
       home: const SplashScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
