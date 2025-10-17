@@ -147,7 +147,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                         items: _students
                             .map((student) => DropdownMenuItem(
                                   value: student.id,
-                                  child: Text(student.name),
+                                  child: Text(student.name ?? 'Unnamed Student'),
                                 ))
                             .toList(),
                         onChanged: (value) {
