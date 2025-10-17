@@ -140,8 +140,7 @@ class StudentProfileScreen extends StatelessWidget {
   Widget _buildDocumentList(String userId) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('users
-')
+          .collection('users')
           .doc(userId)
           .collection('documents')
           .snapshots(),

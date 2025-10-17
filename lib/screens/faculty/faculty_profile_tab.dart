@@ -153,7 +153,7 @@ class _FacultyProfileTabState extends State<FacultyProfileTab> {
               elevation: 4,
               margin: const EdgeInsets.symmetric(vertical: 8.0),
               child: ListTile(
-                leading: aconst Icon(Icons.phone_outlined, color: Colors.blueAccent),
+                leading: const Icon(Icons.phone_outlined, color: Colors.blueAccent),
                 title: const Text('Contact Number', style: TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(_faculty!.contactNumber, style: const TextStyle(fontSize: 16)),
               ),
