@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:smart_doc/models/role.dart';
+import 'package:smart_doc/models/user.dart' as model;
+import 'package:smart_doc/providers/user_provider.dart';
 import 'package:smart_doc/screens/faculty/faculty_registration_screen.dart';
 import 'package:smart_doc/screens/faculty/faculty_waiting_screen.dart';
 import 'package:smart_doc/screens/student/registration_screen.dart';
@@ -85,13 +88,27 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
         return;
-      } 
+      }
 
       final UserCredential userCredential =
           await _auth.signInWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
+
+      final DocumentSnapshot userDoc = await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        throw Exception('User data not found.');
+      }
+
+      final user = model.User.fromSnap(userDoc);
+      if (mounted) {
+        Provider.of<UserProvider>(context, listen: false).setUser(user);
+      }
 
       if (widget.role == Role.faculty) {
         final DocumentSnapshot facultyDoc = await _firestore
@@ -127,18 +144,9 @@ class _LoginScreenState extends State<LoginScreen> {
               'Your registration has been denied or an error occurred.');
         }
       } else {
-        final DocumentSnapshot userDoc = await _firestore
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .get();
-
-        if (!userDoc.exists) {
-          throw Exception('User data not found.');
-        }
-
         final String userRoleStr = userDoc['role'];
-        final Role userRole = Role.values
-            .firstWhere((e) => e.toString() == 'Role.$userRoleStr');
+        final Role userRole =
+            Role.values.firstWhere((e) => e.toString() == 'Role.$userRoleStr');
 
         if (userRole != widget.role) {
           await _auth.signOut();

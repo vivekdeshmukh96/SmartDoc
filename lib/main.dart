@@ -1,12 +1,13 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:smart_doc/providers/user_provider.dart';
 import 'package:smart_doc/screens/splash_screen.dart';
 import 'package:smart_doc/supabase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'firebase_options.dart';
 
 // This function handles background messages
@@ -29,7 +30,12 @@ void main() async {
 
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => UserProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {

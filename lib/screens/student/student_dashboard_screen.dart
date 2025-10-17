@@ -1,7 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import 'package:smart_doc/providers/user_provider.dart';
 import 'package:smart_doc/widgets/custom_app_bar.dart';
 import 'package:smart_doc/widgets/custom_bottom_nav_bar.dart';
 import 'student_home_tab.dart';
@@ -19,27 +18,12 @@ class StudentDashboardScreen extends StatefulWidget {
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   int _selectedIndex = 0;
-  String? _userName;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
-    _fetchUserName();
   }
-
-  Future<void> _fetchUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (userDoc.exists) {
-        setState(() {
-          _userName = userDoc.data()!['name'];
-        });
-      }
-    }
-  }
-
 
   final List<Widget> _widgetOptions = <Widget>[
     const StudentHomeTab(),
@@ -50,9 +34,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Welcome, ${_userName ?? 'Student'}!',
+        title: 'Welcome, ${user?.fullName ?? 'Student'}!',
         showLogout: true,
       ),
       body: _widgetOptions.elementAt(_selectedIndex),
