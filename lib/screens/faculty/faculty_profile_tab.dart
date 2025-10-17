@@ -62,11 +62,11 @@ class _FacultyProfileTabState extends State<FacultyProfileTab> {
       final imageUrl = _supabase.storage.from('profile_photos').getPublicUrl(filePath);
 
       await FirebaseFirestore.instance.collection('faculty').doc(_faculty!.id).update({
-        'profileImageUrl': imageUrl,
+        'photoURL': imageUrl,
       });
 
       setState(() {
-        _faculty!.profileImageUrl = imageUrl;
+        _faculty!.photoURL = imageUrl;
       });
     } on StorageException catch (error) {
       if (mounted) {
@@ -113,10 +113,10 @@ class _FacultyProfileTabState extends State<FacultyProfileTab> {
               children: [
                 CircleAvatar(
                   radius: 80,
-                  backgroundImage: _faculty!.profileImageUrl.isNotEmpty
-                      ? NetworkImage(_faculty!.profileImageUrl)
+                  backgroundImage: _faculty!.photoURL.isNotEmpty
+                      ? NetworkImage(_faculty!.photoURL)
                       : null,
-                  child: _faculty!.profileImageUrl.isEmpty
+                  child: _faculty!.photoURL.isEmpty
                       ? const Icon(Icons.person, size: 80)
                       : null,
                 ),
@@ -153,7 +153,7 @@ class _FacultyProfileTabState extends State<FacultyProfileTab> {
               elevation: 4,
               margin: const EdgeInsets.symmetric(vertical: 8.0),
               child: ListTile(
-                leading: const Icon(Icons.phone_outlined, color: Colors.blueAccent),
+                leading: aconst Icon(Icons.phone_outlined, color: Colors.blueAccent),
                 title: const Text('Contact Number', style: TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(_faculty!.contactNumber, style: const TextStyle(fontSize: 16)),
               ),

@@ -6,7 +6,7 @@ class Faculty {
   final String email;
   final String contactNumber;
   final String department;
-  String profileImageUrl;
+  String photoURL;
 
   Faculty({
     required this.id,
@@ -14,7 +14,7 @@ class Faculty {
     required this.email,
     required this.contactNumber,
     required this.department,
-    this.profileImageUrl = '',
+    this.photoURL = '',
   });
 
   factory Faculty.fromFirestore(DocumentSnapshot doc) {
@@ -25,7 +25,7 @@ class Faculty {
       email: data['email'] ?? '',
       contactNumber: data['contactNumber'] ?? '',
       department: data['department'] ?? '',
-      profileImageUrl: data['profileImageUrl'] ?? '',
+      photoURL: data['photoURL'] ?? '',
     );
   }
 
@@ -35,7 +35,7 @@ class Faculty {
       'email': email,
       'contactNumber': contactNumber,
       'department': department,
-      'profileImageUrl': profileImageUrl,
+      'photoURL': photoURL,
     };
   }
 }
