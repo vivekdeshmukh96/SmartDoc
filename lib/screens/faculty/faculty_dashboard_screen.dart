@@ -32,7 +32,7 @@ class _FacultyDashboardScreenState extends State<FacultyDashboardScreen> {
     final user = Provider.of<UserProvider>(context).user;
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Welcome, ${user?.fullName ?? 'Faculty'}!',
+        title: 'Welcome, ${user?.name ?? 'Faculty'}!',
         showLogout: true,
       ),
       body: _widgetOptions.elementAt(_selectedIndex),

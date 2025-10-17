@@ -32,7 +32,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final user = Provider.of<UserProvider>(context).user;
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Welcome, ${user?.fullName ?? 'Admin'}!',
+        title: 'Welcome, ${user?.name ?? 'Admin'}!',
         showLogout: true,
       ),
       body: _widgetOptions.elementAt(_selectedIndex),

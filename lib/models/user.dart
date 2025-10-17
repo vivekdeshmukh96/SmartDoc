@@ -32,6 +32,25 @@ class User {
     this.contactNo,
   });
 
+  factory User.fromSnap(DocumentSnapshot snap) {
+    var snapshot = snap.data() as Map<String, dynamic>;
+    return User(
+      id: snap.id,
+      name: snapshot['name'],
+      email: snapshot['email'],
+      role: Role.values.firstWhere((e) => e.name == snapshot['role']),
+      rollNumber: snapshot['rollNumber'],
+      className: snapshot['className'],
+      photoURL: snapshot['photoURL'],
+      year: snapshot['year'],
+      section: snapshot['section'],
+      department: snapshot['department'],
+      studentId: snapshot['studentId'],
+      dob: snapshot['dob'] is Timestamp ? (snapshot['dob'] as Timestamp).toDate().toString().substring(0, 10) : snapshot['dob'],
+      contactNo: snapshot['contactNo'],
+    );
+  }
+
   factory User.fromFirestore(Map<String, dynamic> data, String id) {
     return User(
       id: id,
@@ -98,4 +117,6 @@ class User {
       contactNo: contactNo ?? this.contactNo,
     );
   }
+
+  String get fullName => name ?? "N/A";
 }
