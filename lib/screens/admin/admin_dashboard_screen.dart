@@ -29,10 +29,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Welcome, ${user?.name ?? 'Admin'}!',
+      appBar: const CustomAppBar(
+        title: 'Welcome, Admin!',
         showLogout: true,
       ),
       body: _widgetOptions.elementAt(_selectedIndex),

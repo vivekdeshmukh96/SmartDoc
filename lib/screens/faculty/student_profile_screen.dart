@@ -182,8 +182,20 @@ class StudentProfileScreen extends StatelessWidget {
                   onTap: () async {
                     if (document.url != null) {
                       final Uri url = Uri.parse(document.url!);
-                      if (!await launchUrl(url)) {
-                        throw Exception('Could not launch $url');
+                      try {
+                        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Could not launch $url'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error launching document: $e'),
+                          ),
+                        );
                       }
                     }
                   },
