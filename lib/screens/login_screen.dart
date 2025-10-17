@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('User data not found.');
       }
 
-      final user = model.User.fromSnap(userDoc);
+      final user = model.User.fromFirestore(userDoc.data() as Map<String, dynamic>, userDoc.id);
       if (mounted) {
         Provider.of<UserProvider>(context, listen: false).setUser(user);
       }
