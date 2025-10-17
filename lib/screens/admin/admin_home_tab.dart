@@ -1,179 +1,207 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:smart_doc/models/document.dart';
-import 'package:smart_doc/widgets/status_badge.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:smart_doc/models/document.dart' as doc_model;
+import 'package:smart_doc/models/user.dart' as user_model;
+import 'package:fl_chart/fl_chart.dart';
 
-class AdminHomeTab extends StatelessWidget {
+class AdminHomeTab extends StatefulWidget {
   const AdminHomeTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('documents').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('No documents found.'));
-        }
+  State<AdminHomeTab> createState() => _AdminHomeTabState();
+}
 
-        final documents = snapshot.data!.docs
-            .map((doc) => Document.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList();
+class _AdminHomeTabState extends State<AdminHomeTab> {
+  int _userCount = 0;
+  int _documentCount = 0;
+  List<doc_model.Document> _recentDocuments = [];
+  Map<String, int> _userRoleDistribution = {};
+  bool _isLoading = true;
 
-        final totalDocs = documents.length;
-        final approvedDocs = documents
-            .where((doc) => doc.status == DocumentStatus.approved)
-            .length;
-        final rejectedDocs = documents
-            .where((doc) => doc.status == DocumentStatus.rejected)
-            .length;
-        final pendingDocs = documents
-            .where((doc) => doc.status == DocumentStatus.pending)
-            .length;
+  @override
+  void initState() {
+    super.initState();
+    _fetchDashboardData();
+  }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'System Overview',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              _buildMetricCard(context, 'Total Documents', totalDocs.toString(), Colors.blue),
-              _buildMetricCard(context, 'Approved Documents', approvedDocs.toString(), Colors.green),
-              _buildMetricCard(context, 'Rejected Documents', rejectedDocs.toString(), Colors.red),
-              _buildMetricCard(context, 'Pending Documents', pendingDocs.toString(), Colors.orange),
-              const SizedBox(height: 24),
-              Text(
-                'All Documents in System',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              if (documents.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20.0),
-                    child: Text(
-                      'No documents in the system yet.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: documents.length,
-                  itemBuilder: (context, index) {
-                    final doc = documents[index];
-                    return FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance.collection('users').doc(doc.uploadedByUserId).get(),
-                      builder: (context, userSnapshot) {
-                        if (userSnapshot.connectionState == ConnectionState.waiting) {
-                          return const ListTile(title: Text('Loading...'));
-                        }
-                        if (!userSnapshot.hasData) {
-                          return const ListTile(title: Text('User not found'));
-                        }
-                        final uploadedBy = userSnapshot.data!['name'];
+  Future<void> _fetchDashboardData() async {
+    setState(() => _isLoading = true);
+    try {
+      final usersSnapshot = await FirebaseFirestore.instance.collection('users').get();
+      final documentsSnapshot = await FirebaseFirestore.instance.collection('documents').orderBy('uploadedAt', descending: true).limit(5).get();
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  doc.name,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Category: ${doc.category}',
-                                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Text('Status: ', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                                    StatusBadge(status: doc.status),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Uploaded by: $uploadedBy on ${doc.uploadedDate}',
-                                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                ),
-                                if (doc.verifiedByUserId != null) ...[
-                                  const SizedBox(height: 4),
-                                  FutureBuilder<DocumentSnapshot>(
-                                    future: FirebaseFirestore.instance.collection('users').doc(doc.verifiedByUserId!).get(),
-                                    builder: (context, verifiedBySnapshot) {
-                                      if (verifiedBySnapshot.connectionState == ConnectionState.waiting) {
-                                        return const Text('Loading...', style: TextStyle(fontSize: 14, color: Colors.grey));
-                                      }
-                                      if (!verifiedBySnapshot.hasData) {
-                                        return const Text('N/A', style: TextStyle(fontSize: 14, color: Colors.grey));
-                                      }
-                                      final verifiedBy = verifiedBySnapshot.data!['name'];
-                                      return Text(
-                                        'Verified by: $verifiedBy on ${doc.verificationDate}',
-                                        style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                      );
-                                    },
-                                  ),
-                                ],
-                                if (doc.comments != null && doc.comments!.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Comments: ${doc.comments}',
-                                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-            ],
-          ),
+      final users = usersSnapshot.docs.map((doc) => user_model.User.fromSnap(doc)).toList();
+      final roles = <String, int>{};
+      for (var user in users) {
+        final roleName = user.role.name;
+        roles[roleName] = (roles[roleName] ?? 0) + 1;
+      }
+
+      if (mounted) {
+        setState(() {
+          _userCount = usersSnapshot.size;
+          _documentCount = documentsSnapshot.size;
+          _recentDocuments = documentsSnapshot.docs.map((doc) => doc_model.Document.fromSnap(doc)).toList();
+          _userRoleDistribution = roles;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch dashboard data: $e')),
         );
-      },
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _fetchDashboardData,
+              child: ListView(
+                padding: const EdgeInsets.all(16.0),
+                children: [
+                  _buildStatsCards(),
+                  const SizedBox(height: 24),
+                  _buildUserDistributionChart(),
+                  const SizedBox(height: 24),
+                  _buildRecentDocuments(),
+                ],
+              ),
+            ),
     );
   }
 
-  Widget _buildMetricCard(BuildContext context, String title, String value, Color color) {
+  Widget _buildStatsCards() {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      children: [
+        _buildStatCard('Total Users', '$_userCount', Icons.people, Colors.blue),
+        _buildStatCard('Total Documents', '$_documentCount', Icons.insert_drive_file, Colors.green),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: color.withOpacity(0.1),
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: color),
+            Icon(icon, size: 32, color: color),
+            const SizedBox(height: 8),
+            Text(title, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserDistributionChart() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('User Roles', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: PieChart(
+                PieChartData(
+                  sections: _userRoleDistribution.entries.map((entry) {
+                    final isTouched = false; // Add touch interaction if needed
+                    final fontSize = isTouched ? 25.0 : 16.0;
+                    final radius = isTouched ? 60.0 : 50.0;
+                    return PieChartSectionData(
+                      color: _getColorForRole(entry.key),
+                      value: entry.value.toDouble(),
+                      title: '${entry.value}',
+                      radius: radius,
+                      titleStyle: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xffffffff),
+                      ),
+                    );
+                  }).toList(),
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 40,
+                ),
+              ),
             ),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: color),
-            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16,
+              children: _userRoleDistribution.keys.map((role) {
+                return Chip(
+                  avatar: CircleAvatar(backgroundColor: _getColorForRole(role)),
+                  label: Text(role),
+                );
+              }).toList(),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getColorForRole(String role) {
+    switch (role) {
+      case 'student':
+        return Colors.blue;
+      case 'faculty':
+        return Colors.orange;
+      case 'admin':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildRecentDocuments() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Recent Documents', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _recentDocuments.isEmpty
+                ? const Text('No recent documents.')
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _recentDocuments.length,
+                    itemBuilder: (context, index) {
+                      final doc = _recentDocuments[index];
+                      return ListTile(
+                        leading: const Icon(Icons.description),
+                        title: Text(doc.name),
+                        subtitle: Text('Uploaded by: ${doc.id}'), // Placeholder for user name
+                      );
+                    },
+                  ),
           ],
         ),
       ),

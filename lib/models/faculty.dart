@@ -4,12 +4,16 @@ class Faculty {
   final String id;
   final String fullName;
   final String email;
+  final String contactNumber;
+  final String department;
   String profileImageUrl;
 
   Faculty({
     required this.id,
     required this.fullName,
     required this.email,
+    required this.contactNumber,
+    required this.department,
     this.profileImageUrl = '',
   });
 
@@ -19,6 +23,8 @@ class Faculty {
       id: doc.id,
       fullName: data['fullName'] ?? '',
       email: data['email'] ?? '',
+      contactNumber: data['contactNumber'] ?? '',
+      department: data['department'] ?? '',
       profileImageUrl: data['profileImageUrl'] ?? '',
     );
   }
@@ -27,6 +33,8 @@ class Faculty {
     return {
       'fullName': fullName,
       'email': email,
+      'contactNumber': contactNumber,
+      'department': department,
       'profileImageUrl': profileImageUrl,
     };
   }

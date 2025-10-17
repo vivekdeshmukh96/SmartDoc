@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smart_doc/services/firebase_service.dart';
 import 'package:smart_doc/services/supabase_service.dart';
 import 'package:smart_doc/widgets/message_box.dart';
@@ -164,25 +165,41 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
                   decoration: const InputDecoration(labelText: 'Document Name'),
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  hint: const Text('Select Category'),
-                  value: selectedCategory,
-                  items: [
-                    'Aadhar Card',
-                    'PAN Card',
-                    'Income Certificate',
-                    'Driving License',
-                    'Passport'
-                  ].map((String category) {
-                    return DropdownMenuItem<String>(
-                      value: category,
-                      child: Text(category),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('categories').orderBy('name').snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return const Text('Error loading categories');
+                    }
+
+                    final categories = snapshot.data!.docs
+                        .map((doc) => doc['name'] as String)
+                        .toList();
+
+                    if (selectedCategory != null && !categories.contains(selectedCategory)) {
+                      selectedCategory = null;
+                    }
+
+                    return DropdownButtonFormField<String>(
+                      hint: const Text('Select Category'),
+                      value: selectedCategory,
+                      isExpanded: true,
+                      items: categories.map((String category) {
+                        return DropdownMenuItem<String>(
+                          value: category,
+                          child: Text(category),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          selectedCategory = newValue;
+                        });
+                      },
+                      validator: (value) => value == null ? 'Please select a category' : null,
                     );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      selectedCategory = newValue;
-                    });
                   },
                 ),
               ],
@@ -263,8 +280,7 @@ class _StudentUploadTabState extends State<StudentUploadTab> {
                       ),
                       child: _selectedFile!.path.endsWith('.pdf')
                           ? const Icon(Icons.picture_as_pdf, size: 100)
-                          : Image.file(_selectedFile!,
-                              fit: BoxFit.cover, width: double.infinity),
+                          : Image.file(_selectedFile!, fit: BoxFit.cover, width: double.infinity),
                     ),
                     const SizedBox(height: 16),
                     Row(

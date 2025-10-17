@@ -1,183 +1,235 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:smart_doc/models/document.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:smart_doc/models/document.dart';
 
 class AdminAnalyticsTab extends StatelessWidget {
   const AdminAnalyticsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('documents').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('No documents found.'));
-        }
-
-        final documents = snapshot.data!.docs
-            .map((doc) => Document.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList();
-
-        final totalDocs = documents.length;
-        final approvedDocs = documents
-            .where((doc) => doc.status == DocumentStatus.approved)
-            .length;
-        final rejectedDocs = documents
-            .where((doc) => doc.status == DocumentStatus.rejected)
-            .length;
-        final pendingDocs = documents
-            .where((doc) => doc.status == DocumentStatus.pending)
-            .length;
-
-        final Map<String, int> docsByCategory = {};
-        for (var doc in documents) {
-          docsByCategory.update(doc.category, (value) => value + 1,
-              ifAbsent: () => 1);
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Analytics & Reports',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              // Document Status Summary
-              Card(
-                elevation: 6,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Document Status Summary',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(height: 20, thickness: 1),
-                      _buildAnalyticRow(context, 'Total Documents:', totalDocs.toString()),
-                      _buildAnalyticRow(context, 'Approved:', approvedDocs.toString(), color: Colors.green),
-                      _buildAnalyticRow(context, 'Rejected:', rejectedDocs.toString(), color: Colors.red),
-                      _buildAnalyticRow(context, 'Pending:', pendingDocs.toString(), color: Colors.orange),
-                    ],
+    return Scaffold(
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('documents').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.analytics_outlined, size: 100, color: Colors.grey[300]),
+                  const SizedBox(height: 20),
+                  Text(
+                    'No document data available for analytics.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 20, color: Colors.grey[600]),
                   ),
+                ],
+              ),
+            );
+          }
+
+          final documents = snapshot.data!.docs
+              .map((doc) => Document.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+              .toList();
+
+          return _buildAnalyticsBody(context, documents);
+        },
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsBody(BuildContext context, List<Document> documents) {
+    final statusCounts = _getDocumentStatusCounts(documents);
+    final categoryCounts = _getDocumentCategoryCounts(documents);
+
+    return ListView(
+      padding: const EdgeInsets.all(16.0),
+      children: [
+        Text(
+          'Analytics & Reports',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey[800],
+              ),
+        ),
+        const SizedBox(height: 24),
+        _buildStatusPieChartCard(context, statusCounts, documents.length),
+        const SizedBox(height: 24),
+        _buildCategoryBarChartCard(context, categoryCounts),
+      ],
+    );
+  }
+
+  Map<DocumentStatus, int> _getDocumentStatusCounts(List<Document> documents) {
+    final Map<DocumentStatus, int> counts = {
+      DocumentStatus.approved: 0,
+      DocumentStatus.pending: 0,
+      DocumentStatus.rejected: 0,
+    };
+    for (var doc in documents) {
+      counts[doc.status] = (counts[doc.status] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  Map<String, int> _getDocumentCategoryCounts(List<Document> documents) {
+    final Map<String, int> counts = {};
+    for (var doc in documents) {
+      counts.update(doc.category, (value) => value + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
+
+  Widget _buildStatusPieChartCard(BuildContext context, Map<DocumentStatus, int> statusCounts, int totalDocs) {
+    final List<PieChartSectionData> sections = statusCounts.entries.map((entry) {
+      final isTouched = false; // Placeholder for future interactivity
+      final double fontSize = isTouched ? 18.0 : 14.0;
+      final double radius = isTouched ? 60.0 : 50.0;
+      return PieChartSectionData(
+        color: _getColorForStatus(entry.key),
+        value: entry.value.toDouble(),
+        title: '${entry.value}',
+        radius: radius,
+        titleStyle: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          color: const Color(0xffffffff),
+        ),
+      );
+    }).toList();
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Document Status', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 200,
+              child: PieChart(
+                PieChartData(
+                  sections: sections,
+                  borderData: FlBorderData(show: false),
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 40,
                 ),
               ),
-              const SizedBox(height: 24),
-              // Documents by Category
-              Card(
-                elevation: 6,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Documents by Category',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(height: 20, thickness: 1),
-                      if (docsByCategory.isEmpty)
-                        const Text('No categories with documents yet.', style: TextStyle(color: Colors.grey))
-                      else
-                        ...docsByCategory.entries.map((entry) => _buildAnalyticRow(
-                          context,
-                          '${entry.key}:',
-                          entry.value.toString(),
-                        )),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // System Logs/Reports (Simulated)
-              Card(
-                elevation: 6,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'System Logs/Reports (Simulated)',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(height: 20, thickness: 1),
-                      Text(
-                        'This section would display detailed system activities, such as user logins, document uploads, verification actions, and errors. For this prototype, it\'s a placeholder.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[700]),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Recent Activities:',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildLogEntry('User Alice Student uploaded a new document (ID Card).'),
-                      _buildLogEntry('Faculty Dr. Bob Faculty approved document "Degree Certificate".'),
-                      _buildLogEntry('Admin Ms. Carol Admin added new category "Scholarship".'),
-                      _buildLogEntry('User Alice Student viewed document "Marksheet".'),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            _buildLegend(statusCounts),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegend(Map<DocumentStatus, int> statusCounts) {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 8,
+      children: statusCounts.keys.map((status) {
+        return Chip(
+          avatar: CircleAvatar(backgroundColor: _getColorForStatus(status)),
+          label: Text('${status.name[0].toUpperCase()}${status.name.substring(1)}'), // Capitalize first letter
         );
-      },
+      }).toList(),
     );
   }
 
-  Widget _buildAnalyticRow(BuildContext context, String label, String value, {Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
-          ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color ?? Colors.blueGrey.shade800,
+  Widget _buildCategoryBarChartCard(BuildContext context, Map<String, int> categoryCounts) {
+    final List<BarChartGroupData> barGroups = [];
+    int i = 0;
+    categoryCounts.forEach((category, count) {
+      barGroups.add(
+        BarChartGroupData(
+          x: i++,
+          barRods: [
+            BarChartRodData(
+              toY: count.toDouble(),
+              color: Colors.amber, // You can have dynamic colors
+              width: 16,
+              borderRadius: BorderRadius.circular(4),
             ),
-          ),
-        ],
+          ],
+        ),
+      );
+    });
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Documents by Category', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 250,
+              child: categoryCounts.isEmpty
+                  ? const Center(child: Text('No documents with categories yet.'))
+                  : BarChart(
+                      BarChartData(
+                        alignment: BarChartAlignment.spaceAround,
+                        maxY: (categoryCounts.values.isEmpty ? 0 : categoryCounts.values.reduce((a, b) => a > b ? a : b)) * 1.2,
+                        barTouchData: BarTouchData(enabled: true),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (double value, TitleMeta meta) {
+                                final index = value.toInt();
+                                if (index >= 0 && index < categoryCounts.keys.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 6.0),
+                                    child: Text(categoryCounts.keys.elementAt(index), style: const TextStyle(fontSize: 12)),
+                                  );
+                                }
+                                return const Text('');
+                              },
+                              reservedSize: 38,
+                            ),
+                          ),
+                          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
+                          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
+                        gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 5),
+                        borderData: FlBorderData(show: false),
+                        barGroups: barGroups,
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLogEntry(String entry) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.event_note, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              entry,
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-            ),
-          ),
-        ],
-      ),
-    );
+  Color _getColorForStatus(DocumentStatus status) {
+    switch (status) {
+      case DocumentStatus.approved:
+        return Colors.green.shade600;
+      case DocumentStatus.pending:
+        return Colors.orange.shade600;
+      case DocumentStatus.rejected:
+        return Colors.red.shade600;
+      default:
+        return Colors.grey.shade600;
+    }
   }
 }

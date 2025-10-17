@@ -149,6 +149,24 @@ class _FacultyProfileTabState extends State<FacultyProfileTab> {
                 subtitle: Text(_faculty!.email, style: const TextStyle(fontSize: 16)),
               ),
             ),
+            Card(
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ListTile(
+                leading: const Icon(Icons.phone_outlined, color: Colors.blueAccent),
+                title: const Text('Contact Number', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(_faculty!.contactNumber, style: const TextStyle(fontSize: 16)),
+              ),
+            ),
+            Card(
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ListTile(
+                leading: const Icon(Icons.business_outlined, color: Colors.blueAccent),
+                title: const Text('Department', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(_faculty!.department, style: const TextStyle(fontSize: 16)),
+              ),
+            ),
           ],
         ),
       ),
