@@ -1,92 +1,89 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:smart_doc/models/notification.dart' as model;
 
-class StudentNotificationsTab extends StatelessWidget {
+class StudentNotificationsTab extends StatefulWidget {
   const StudentNotificationsTab({super.key});
 
   @override
+  State<StudentNotificationsTab> createState() => _StudentNotificationsTabState();
+}
+
+class _StudentNotificationsTabState extends State<StudentNotificationsTab> {
+  late Stream<QuerySnapshot> _notificationStream;
+
+  @override
+  void initState() {
+    super.initState();
+    final studentId = FirebaseAuth.instance.currentUser!.uid;
+    _notificationStream = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('target', 'in', ['all', studentId])
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Simulated notifications data
-    final List<Map<String, Object>> notifications = [
-      {
-        'title': 'Fee Reminder',
-        'message': 'Your semester fee is due on 25th July 2024.',
-        'date': '15/07/2024',
-        'isRead': false,
-      },
-      {
-        'title': 'Exam Schedule',
-        'message': 'Your final year exam schedule has been released.',
-        'date': '10/07/2024',
-        'isRead': true,
-      },
-      {
-        'title': 'Holiday Notice',
-        'message': 'The college will be closed on 15th August 2024.',
-        'date': '01/07/2024',
-        'isRead': true,
-      },
-    ];
+    return StreamBuilder<QuerySnapshot>(
+      stream: _notificationStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
 
-    // Sort notifications by date (most recent first)
-    notifications.sort((a, b) {
-      try {
-        final DateFormat format = DateFormat('dd/MM/yyyy');
-        final DateTime dateA = format.parse(a['date'] as String);
-        final DateTime dateB = format.parse(b['date'] as String);
-        return dateB.compareTo(dateA); // Use compareTo for proper sorting
-      } catch (e) {
-        // Handle potential parsing errors gracefully
-        return 0;
-      }
-    });
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
+        final notifications = snapshot.data!.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return model.Notification.fromFirestore(data, doc.id);
+        }).toList();
 
-    return ListView.builder(
-      itemCount: notifications.length,
-      itemBuilder: (context, index) {
-        final notification = notifications[index];
-        return Card(
-          elevation: 4,
-          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: !(notification['isRead'] as bool) ? Theme.of(context).primaryColor : Colors.grey,
-              child: const Icon(Icons.notifications, color: Colors.white),
-            ),
-            title: Text(
-              notification['title'] as String,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: !(notification['isRead'] as bool) ? Colors.black87 : Colors.grey[600],
+        if (notifications.isEmpty) {
+          return const Center(child: Text('You have no notifications.'));
+        }
+
+        return ListView.builder(
+          itemCount: notifications.length,
+          itemBuilder: (context, index) {
+            final notification = notifications[index];
+            return Card(
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  child: const Icon(Icons.notifications, color: Colors.white),
+                ),
+                title: Text(
+                  notification.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(notification.message),
+                    const SizedBox(height: 8),
+                    Text(
+                      notification.timestamp.toDate().toString().substring(0, 10),
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                isThreeLine: true,
               ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text(
-                  notification['message'] as String,
-                  style: TextStyle(
-                    color: !(notification['isRead'] as bool) ? Colors.black54 : Colors.grey[500],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  notification['date'] as String,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            isThreeLine: true,
-            onTap: () {
-              // TODO: Mark as read and navigate to notification details
-            },
-          ),
+            );
+          },
         );
       },
     );
