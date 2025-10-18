@@ -188,104 +188,163 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blueAccent, Colors.indigoAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      height: 100,
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Login as ${widget.role.toString().split('.').last.capitalize()}',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'user@college.edu',
-                        prefixIcon: Icon(Icons.email),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'password',
-                        prefixIcon: Icon(Icons.lock),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    _isLoading
-                        ? const CircularProgressIndicator()
-                        : ElevatedButton(
-                            onPressed: _login,
-                            child: const Text('Login'),
-                          ),
-                    if (widget.role == Role.student)
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    RegistrationScreen(role: widget.role)),
-                          );
-                        },
-                        child: const Text('Sign Up'),
-                      ),
-                    if (widget.role == Role.faculty)
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const FacultyRegistrationScreen()),
-                          );
-                        },
-                        child: const Text('Register Here'),
-                      ),
-                    TextButton(
-                      onPressed: () {
-                        showMessageBox(context, 'Feature',
-                            'Forgot Password not implemented in prototype.');
-                      },
-                      child: const Text('Forgot Password?'),
-                    ),
-                  ],
-                ),
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 48.0),
+                _buildLoginForm(),
+                const SizedBox(height: 24.0),
+                _buildFooter(),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Image.asset('assets/images/logo.png', height: 100),
+        const SizedBox(height: 16.0),
+        Text(
+          'Welcome Back!',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+        const SizedBox(height: 8.0),
+        Text(
+          'Login as ${widget.role.toString().split('.').last.capitalize()}',
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginForm() {
+    return Column(
+      children: [
+        TextFormField(
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: 'Email',
+            hintText: 'user@college.edu',
+            prefixIcon: const Icon(Icons.email_outlined),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+              borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16.0),
+        TextFormField(
+          controller: _passwordController,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            hintText: 'password',
+            prefixIcon: const Icon(Icons.lock_outline),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+              borderSide: const BorderSide(color: Colors.blueAccent, width: 2.0),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24.0),
+        _isLoading
+            ? const CircularProgressIndicator()
+            : SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    elevation: 5,
+                  ),
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
+              ),
+      ],
+    );
+  }
+
+  Widget _buildFooter() {
+    return Column(
+      children: [
+        TextButton(
+          onPressed: () {
+            showMessageBox(context, 'Feature',
+                'Forgot Password not implemented in prototype.');
+          },
+          child: const Text(
+            'Forgot Password?',
+            style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 8.0),
+        if (widget.role == Role.student)
+          _buildSignUpButton(() {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      RegistrationScreen(role: widget.role)),
+            );
+          }),
+        if (widget.role == Role.faculty)
+          _buildSignUpButton(() {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const FacultyRegistrationScreen()),
+            );
+          }),
+      ],
+    );
+  }
+
+  Widget _buildSignUpButton(VoidCallback onPressed) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Don't have an account?"),
+        TextButton(
+          onPressed: onPressed,
+          child: const Text(
+            'Sign Up',
+            style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 }

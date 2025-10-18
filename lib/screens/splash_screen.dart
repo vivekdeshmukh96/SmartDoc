@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:smart_doc/screens/role_selection_screen.dart';
 import 'package:lottie/lottie.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,104 +13,74 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  bool _showFirst = false;
-  bool _showSecond = false;
-  bool _showThird = false;
+  bool _showLogo = false;
+  bool _showText = false;
 
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(milliseconds: 300), () => setState(() => _showSecond = true));
-    Timer(const Duration(milliseconds: 600), () => setState(() => _showThird = true));
-    Timer(const Duration(milliseconds: 100), () => setState(() => _showFirst = true));
 
+    // Step 1: Show logo with pop-up animation
+    Timer(const Duration(milliseconds: 300), () {
+      setState(() => _showLogo = true);
+    });
+
+    // Step 2: Show "SmartDoc" typing effect after logo appears
+    Timer(const Duration(milliseconds: 1000), () {
+      setState(() => _showText = true);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedSplashScreen(
-      duration: 3000,
+      duration: 3500,
       splash: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedOpacity(
-                opacity: _showFirst ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 800),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 800),
-                  transform: Matrix4.translationValues(0, _showFirst ? 0 : -20, 0),
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    height: 120,
-                  ),
-                ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 🔹 Logo Pop-up Animation
+            AnimatedScale(
+              scale: _showLogo ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOutBack,
+              child: Image.asset(
+                'assets/images/logo.png',
+                height: 120,
               ),
-              const SizedBox(height: 20),
-              AnimatedOpacity(
-                opacity: _showSecond ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 1000),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 1000),
-                  transform: Matrix4.translationValues(0, _showSecond ? 0 : -20, 0),
-                  child: Column(
-                    children: [
-                      Text(
-                        'SmartDoc',
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF2563EB),
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Lottie.asset(
-                        'assets/loader.json',
-                        height: 100,
-                      ),
-                    ],
-                  ),
+            ),
+
+            const SizedBox(height: 25),
+
+            // 🔹 Typing Effect for SmartDoc Text
+            if (_showText)
+              DefaultTextStyle(
+                style: const TextStyle(
+                  fontSize: 38,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                  letterSpacing: 1.5,
                 ),
-              ),
-              const SizedBox(height: 30),
-              AnimatedOpacity(
-                opacity: _showThird ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 800),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB).withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB).withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                child: AnimatedTextKit(
+                  isRepeatingAnimation: false,
+                  animatedTexts: [
+                    TypewriterAnimatedText(
+                      'SmartDoc',
+                      speed: Duration(milliseconds: 150),
+                      cursor: '|',
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+
+            const SizedBox(height: 30),
+
+            // 🔹 Lottie Loader
+            Lottie.asset(
+              'assets/loader.json',
+              height: 80,
+            ),
+          ],
         ),
       ),
       nextScreen: const RoleSelectionScreen(),
