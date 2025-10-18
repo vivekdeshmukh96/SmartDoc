@@ -59,7 +59,7 @@ class StudentProfileScreen extends StatelessWidget {
   Widget _buildProfileHeader() {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.only(top: 40.0), // Adjust top padding to avoid overlap with status bar
+        padding: const EdgeInsets.only(top: 40.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -77,10 +77,7 @@ class StudentProfileScreen extends StatelessWidget {
             Text(
               user.name ?? 'N/A',
               style: const TextStyle(
-                fontSize: 22, 
-                fontWeight: FontWeight.bold, 
-                color: Colors.black87
-              ),
+                  fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
@@ -94,61 +91,49 @@ class StudentProfileScreen extends StatelessWidget {
   }
 
   Widget _buildDetailsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildInfoGrid(),
-          // You can add more widgets here if needed
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 20,
-      mainAxisSpacing: 20,
-      childAspectRatio: 2.5, // Adjust for better tile proportions
+    return ListView(
+      padding: const EdgeInsets.all(16.0),
       children: [
-        _buildInfoTile('Student ID', user.studentId ?? 'N/A'),
-        _buildInfoTile('Year', user.year ?? 'N/A'),
-        _buildInfoTile('Section', user.section ?? 'N/A'),
-        _buildInfoTile('Department', user.department ?? 'N/A'),
-        _buildInfoTile('Contact No', user.contactNo ?? 'N/A'),
+        _buildInfoCard('Student ID', user.studentId ?? 'N/A', Icons.credit_card),
+        _buildInfoCard('Year', user.year ?? 'N/A', Icons.calendar_today),
+        _buildInfoCard('Section', user.section ?? 'N/A', Icons.class_),
+        _buildInfoCard('Department', user.department ?? 'N/A', Icons.school),
+        _buildInfoCard('Contact No', user.contactNo ?? 'N/A', Icons.phone),
       ],
     );
   }
 
-  Widget _buildInfoTile(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+  Widget _buildInfoCard(String label, String value, IconData icon) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: Colors.grey.shade200)
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 14, color: Colors.grey[500], fontWeight: FontWeight.w500),
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-            overflow: TextOverflow.ellipsis,
-
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.blueAccent, size: 28),
+            const SizedBox(width: 16.0),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                      fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -302,7 +287,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: Colors.white, // Setting a background color
+      color: Colors.white,
       child: _tabBar,
     );
   }
