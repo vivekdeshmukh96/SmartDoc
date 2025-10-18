@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smart_doc/models/document.dart' as doc_model;
 import 'package:smart_doc/models/user.dart' as user_model;
+import 'package:smart_doc/models/faculty.dart' as faculty_model;
 import 'package:fl_chart/fl_chart.dart';
 
 class AdminHomeTab extends StatefulWidget {
@@ -29,30 +30,30 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
     setState(() => _isLoading = true);
     try {
       final usersSnapshot = await FirebaseFirestore.instance.collection('users').get();
+      final facultySnapshot = await FirebaseFirestore.instance.collection('faculty').get();
       final allDocumentsSnapshot = await FirebaseFirestore.instance.collection('documents').get();
 
       final users = usersSnapshot.docs.map((doc) => user_model.User.fromFirestore(doc.data(), doc.id)).toList();
+      final faculty = facultySnapshot.docs.map((doc) => faculty_model.Faculty.fromFirestore(doc)).toList();
+
       final userMap = {for (var user in users) user.id: user};
-      
-      final roles = <String, int>{};
-      int facultyCount = 0;
-      for (var user in users) {
-        final roleName = user.role.name;
-        roles[roleName] = (roles[roleName] ?? 0) + 1;
-        if (user.role == user_model.Role.faculty) {
-          facultyCount++;
-        }
-      }
+      final facultyMap = {for (var f in faculty) f.id: f};
+
+      final roles = <String, int>{
+        'student': users.where((u) => u.role == user_model.Role.student).length,
+        'admin': users.where((u) => u.role == user_model.Role.admin).length,
+        'faculty': faculty.length,
+      };
 
       final documents = allDocumentsSnapshot.docs.map((doc) => doc_model.Document.fromFirestore(doc.data(), doc.id)).toList();
-      final facultyDocuments = documents.where((doc) => userMap[doc.uploadedByUserId]?.role == user_model.Role.faculty).toList();
+      final facultyDocuments = documents.where((doc) => facultyMap.containsKey(doc.uploadedByUserId)).toList();
 
       final recentDocuments = facultyDocuments.take(5).toList();
 
       if (mounted) {
         setState(() {
-          _userCount = usersSnapshot.size;
-          _facultyCount = facultyCount;
+          _userCount = users.length;
+          _facultyCount = faculty.length;
           _documentCount = facultyDocuments.length;
           _recentDocuments = recentDocuments;
           _userRoleDistribution = roles;
