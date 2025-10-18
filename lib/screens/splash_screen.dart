@@ -15,7 +15,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   bool _showLogo = false;
   bool _showText = false;
-  bool _isTypingAnimationFinished = false;
+  bool _isSmartAnimationFinished = false;
 
   @override
   void initState() {
@@ -44,9 +44,13 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 25),
               if (_showText)
-                _isTypingAnimationFinished
-                    ? _buildRichText()
-                    : _buildAnimatedText(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildAnimatedSmartText(),
+                    if (_isSmartAnimationFinished) _buildAnimatedDocText(),
+                  ],
+                ),
               const SizedBox(height: 30),
               Lottie.asset(
                 'assets/loader.json',
@@ -62,49 +66,46 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  Widget _buildAnimatedText() {
+  Widget _buildAnimatedSmartText() {
     return AnimatedTextKit(
       isRepeatingAnimation: false,
       animatedTexts: [
         TypewriterAnimatedText(
-          'SmartDoc',
+          'Smart',
           speed: const Duration(milliseconds: 150),
-          cursor: '|',
+          cursor: '',
           textStyle: const TextStyle(
             fontSize: 38,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1A237E), // Initial color
+            color: Color(0xFF1A237E), // Dark Navy Blue
             letterSpacing: 1.5,
           ),
         ),
       ],
       onFinished: () {
         setState(() {
-          _isTypingAnimationFinished = true;
+          _isSmartAnimationFinished = true;
         });
       },
     );
   }
 
-  Widget _buildRichText() {
-    return RichText(
-      text: const TextSpan(
-        style: TextStyle(
-          fontSize: 38,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.5,
+  Widget _buildAnimatedDocText() {
+    return AnimatedTextKit(
+      isRepeatingAnimation: false,
+      animatedTexts: [
+        TypewriterAnimatedText(
+          'Doc',
+          speed: const Duration(milliseconds: 150),
+          cursor: '|',
+          textStyle: const TextStyle(
+            fontSize: 38,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF03A9F4), // Sky Blue
+            letterSpacing: 1.5,
+          ),
         ),
-        children: <TextSpan>[
-          TextSpan(
-            text: 'Smart',
-            style: TextStyle(color: Color(0xFF1A237E)), // Dark Navy Blue
-          ),
-          TextSpan(
-            text: 'Doc',
-            style: TextStyle(color: Color(0xFF03A9F4)), // Sky Blue
-          ),
-        ],
-      ),
+      ],
     );
   }
 }

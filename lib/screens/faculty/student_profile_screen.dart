@@ -116,21 +116,23 @@ class StudentProfileScreen extends StatelessWidget {
           children: [
             Icon(icon, color: Colors.blueAccent, size: 28),
             const SizedBox(width: 16.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                      fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                        fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
