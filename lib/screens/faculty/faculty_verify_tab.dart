@@ -15,7 +15,7 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
     // Get the reference to the document
     final docRef = FirebaseFirestore.instance
         .collection('users')
-        .doc(document.userId)
+        .doc(document.uploadedByUserId)
         .collection('documents')
         .doc(document.id);
 
@@ -65,7 +65,7 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
                     ListTile(
                       leading: const Icon(Icons.description, color: Colors.blue),
                       title: Text(document.name ?? 'No Name'),
-                      subtitle: Text('Status: ${document.status}'),
+                      subtitle: Text('Status: ${document.status.toString().split('.').last}'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: () async {
                         if (document.url != null) {
