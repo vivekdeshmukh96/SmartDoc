@@ -220,7 +220,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                         id: doc.id,
                         name: data.containsKey('name') ? data['name'] : 'N/A',
                         email: data['email'],
-                        role: Role.values.firstWhere((e) => e.toString() == 'Role.${data['role']}'),
+                        role: Role.values.firstWhere((e) => e.toString() == 'Role.${data['role']}', orElse: () => Role.student),
                       );
 
                       return Card(

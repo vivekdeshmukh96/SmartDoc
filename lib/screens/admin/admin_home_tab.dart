@@ -13,6 +13,7 @@ class AdminHomeTab extends StatefulWidget {
 
 class _AdminHomeTabState extends State<AdminHomeTab> {
   int _userCount = 0;
+  int _facultyCount = 0;
   int _documentCount = 0;
   List<doc_model.Document> _recentDocuments = [];
   Map<String, int> _userRoleDistribution = {};
@@ -28,20 +29,32 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
     setState(() => _isLoading = true);
     try {
       final usersSnapshot = await FirebaseFirestore.instance.collection('users').get();
-      final documentsSnapshot = await FirebaseFirestore.instance.collection('documents').orderBy('uploadedAt', descending: true).limit(5).get();
+      final allDocumentsSnapshot = await FirebaseFirestore.instance.collection('documents').get();
 
-      final users = usersSnapshot.docs.map((doc) => user_model.User.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
+      final users = usersSnapshot.docs.map((doc) => user_model.User.fromFirestore(doc.data(), doc.id)).toList();
+      final userMap = {for (var user in users) user.id: user};
+      
       final roles = <String, int>{};
+      int facultyCount = 0;
       for (var user in users) {
         final roleName = user.role.name;
         roles[roleName] = (roles[roleName] ?? 0) + 1;
+        if (user.role == user_model.Role.faculty) {
+          facultyCount++;
+        }
       }
+
+      final documents = allDocumentsSnapshot.docs.map((doc) => doc_model.Document.fromFirestore(doc.data(), doc.id)).toList();
+      final facultyDocuments = documents.where((doc) => userMap[doc.uploadedBy]?.role == user_model.Role.faculty).toList();
+
+      final recentDocuments = facultyDocuments.take(5).toList();
 
       if (mounted) {
         setState(() {
           _userCount = usersSnapshot.size;
-          _documentCount = documentsSnapshot.size;
-          _recentDocuments = documentsSnapshot.docs.map((doc) => doc_model.Document.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
+          _facultyCount = facultyCount;
+          _documentCount = facultyDocuments.length;
+          _recentDocuments = recentDocuments;
           _userRoleDistribution = roles;
           _isLoading = false;
         });
@@ -87,6 +100,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
       children: [
         _buildStatCard('Total Users', '$_userCount', Icons.people, Colors.blue),
         _buildStatCard('Total Documents', '$_documentCount', Icons.insert_drive_file, Colors.green),
+        _buildStatCard('Faculty', '$_facultyCount', Icons.school, Colors.orange),
       ],
     );
   }
@@ -127,7 +141,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
               child: PieChart(
                 PieChartData(
                   sections: _userRoleDistribution.entries.map((entry) {
-                    final isTouched = false; // Add touch interaction if needed
+                    final isTouched = false;
                     final fontSize = isTouched ? 25.0 : 16.0;
                     final radius = isTouched ? 60.0 : 50.0;
                     return PieChartSectionData(
@@ -153,7 +167,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
               children: _userRoleDistribution.keys.map((role) {
                 return Chip(
                   avatar: CircleAvatar(backgroundColor: _getColorForRole(role)),
-                  label: Text(role),
+                  label: Text(role.toUpperCase()),
                 );
               }).toList(),
             )
@@ -188,7 +202,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
             const Text('Recent Documents', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             _recentDocuments.isEmpty
-                ? const Text('No recent documents.')
+                ? const Text('No recent documents from faculty.')
                 : ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -198,7 +212,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
                       return ListTile(
                         leading: const Icon(Icons.description),
                         title: Text(doc.name),
-                        subtitle: Text('Uploaded by: ${doc.id}'), // Placeholder for user name
+                        subtitle: Text('Uploaded on: ${doc.uploadedAt.toLocal().toString().substring(0, 10)}'),
                       );
                     },
                   ),

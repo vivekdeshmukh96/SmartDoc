@@ -16,37 +16,13 @@ class _SplashScreenState extends State<SplashScreen> {
   bool _showLogo = false;
   bool _showText = false;
   bool _isSmartAnimationFinished = false;
-  late Widget _smartTextAnimation;
+  bool _isDocAnimationFinished = false;
 
   @override
   void initState() {
     super.initState();
     Timer(const Duration(milliseconds: 300), () => setState(() => _showLogo = true));
     Timer(const Duration(milliseconds: 1000), () => setState(() => _showText = true));
-
-    _smartTextAnimation = AnimatedTextKit(
-      isRepeatingAnimation: false,
-      animatedTexts: [
-        TypewriterAnimatedText(
-          'Smart',
-          speed: const Duration(milliseconds: 150),
-          cursor: '',
-          textStyle: const TextStyle(
-            fontSize: 38,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A237E), // Dark Navy Blue
-            letterSpacing: 1.5,
-          ),
-        ),
-      ],
-      onFinished: () {
-        if (mounted) {
-          setState(() {
-            _isSmartAnimationFinished = true;
-          });
-        }
-      },
-    );
   }
 
   @override
@@ -72,8 +48,9 @@ class _SplashScreenState extends State<SplashScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _smartTextAnimation,
-                    if (_isSmartAnimationFinished) _buildAnimatedDocText(),
+                    _isSmartAnimationFinished ? _buildStaticSmartText() : _buildAnimatedSmartText(),
+                    if (_isSmartAnimationFinished)
+                      _isDocAnimationFinished ? _buildStaticDocText() : _buildAnimatedDocText(),
                   ],
                 ),
               const SizedBox(height: 30),
@@ -88,6 +65,32 @@ class _SplashScreenState extends State<SplashScreen> {
       nextScreen: const RoleSelectionScreen(),
       splashTransition: SplashTransition.fadeTransition,
       backgroundColor: Colors.white,
+    );
+  }
+
+  Widget _buildAnimatedSmartText() {
+    return AnimatedTextKit(
+      isRepeatingAnimation: false,
+      animatedTexts: [
+        TypewriterAnimatedText(
+          'Smart',
+          speed: const Duration(milliseconds: 150),
+          cursor: '',
+          textStyle: const TextStyle(
+            fontSize: 38,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1A237E), // Dark Navy Blue
+            letterSpacing: 1.5,
+          ),
+        ),
+      ],
+      onFinished: () {
+        if (mounted) {
+          setState(() {
+            _isSmartAnimationFinished = true;
+          });
+        }
+      },
     );
   }
 
@@ -107,6 +110,37 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         ),
       ],
+      onFinished: () {
+        if (mounted) {
+          setState(() {
+            _isDocAnimationFinished = true;
+          });
+        }
+      },
+    );
+  }
+
+  Widget _buildStaticSmartText() {
+    return const Text(
+      'Smart',
+      style: TextStyle(
+        fontSize: 38,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF1A237E), // Dark Navy Blue
+        letterSpacing: 1.5,
+      ),
+    );
+  }
+
+  Widget _buildStaticDocText() {
+    return const Text(
+      'Doc',
+      style: TextStyle(
+        fontSize: 38,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF03A9F4), // Sky Blue
+        letterSpacing: 1.5,
+      ),
     );
   }
 }
