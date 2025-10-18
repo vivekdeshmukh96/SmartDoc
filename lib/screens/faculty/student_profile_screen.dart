@@ -159,7 +159,7 @@ class StudentProfileScreen extends StatelessWidget {
           .collection('users')
           .doc(user.id)
           .collection('documents')
-          .orderBy('uploadedAt', descending: true)
+          .orderBy('uploadedDate', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -190,6 +190,7 @@ class StudentProfileScreen extends StatelessWidget {
   }
 
   Widget _buildDocumentTile(BuildContext context, doc.Document document) {
+    DateTime? uploadedDateTime = DateTime.tryParse(document.uploadedDate);
     return InkWell(
       onTap: () async {
         if (document.downloadUrl != null && document.downloadUrl!.isNotEmpty) {
@@ -230,9 +231,9 @@ class StudentProfileScreen extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  if (document.uploadedAt != null)
+                  if (uploadedDateTime != null)
                     Text(
-                      'Uploaded ${timeago.format(document.uploadedAt!)}',
+                      'Uploaded ${timeago.format(uploadedDateTime)}',
                       style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
                 ],
@@ -268,6 +269,11 @@ class StudentProfileScreen extends StatelessWidget {
         backgroundColor = Colors.red.shade50;
         textColor = Colors.red.shade800;
         text = 'Rejected';
+        break;
+      case doc.DocumentStatus.resubmission:
+        backgroundColor = Colors.blue.shade50;
+        textColor = Colors.blue.shade800;
+        text = 'Resubmission';
         break;
     }
 
