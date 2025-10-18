@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:smart_doc/models/notification.dart' as model;
+import 'package:timeago/timeago.dart' as timeago;
 
 class StudentNotificationsTab extends StatefulWidget {
   const StudentNotificationsTab({super.key});
@@ -20,7 +21,6 @@ class _StudentNotificationsTabState extends State<StudentNotificationsTab> {
     _notificationStream = FirebaseFirestore.instance
         .collection('notifications')
         .where('target', whereIn: ['all', studentId])
-        // .orderBy('timestamp', descending: true) // Removed to avoid composite index
         .snapshots();
   }
 
@@ -42,48 +42,74 @@ class _StudentNotificationsTabState extends State<StudentNotificationsTab> {
           return model.Notification.fromFirestore(data, doc.id);
         }).toList();
 
-        // Sort notifications by timestamp on the client-side
         notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
         if (notifications.isEmpty) {
-          return const Center(child: Text('You have no notifications.'));
+          return const Center(
+            child: Text(
+              'You have no notifications.',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
         }
 
         return ListView.builder(
+          padding: const EdgeInsets.all(8.0),
           itemCount: notifications.length,
           itemBuilder: (context, index) {
             final notification = notifications[index];
             return Card(
-              elevation: 4,
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              elevation: 3,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  child: const Icon(Icons.notifications, color: Colors.white),
-                ),
-                title: Text(
-                  notification.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Column(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 4),
-                    Text(notification.message),
-                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.notifications, color: Theme.of(context).primaryColor, size: 24),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20),
                     Text(
-                      notification.timestamp.toDate().toString().substring(0, 10),
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 12,
-                      ),
+                      notification.message,
+                      style: const TextStyle(fontSize: 15, height: 1.4),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'From: ${notification.senderName}',
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          timeago.format(notification.timestamp.toDate()),
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                isThreeLine: true,
               ),
             );
           },

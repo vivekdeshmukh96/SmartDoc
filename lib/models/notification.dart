@@ -6,6 +6,7 @@ class Notification {
   final String title;
   final String message;
   final String senderId;
+  final String senderName; // Added senderName
   final String target;
   final Timestamp timestamp;
 
@@ -14,6 +15,7 @@ class Notification {
     required this.title,
     required this.message,
     required this.senderId,
+    required this.senderName, // Added to constructor
     required this.target,
     required this.timestamp,
   });
@@ -24,6 +26,7 @@ class Notification {
       title: data['title'] ?? '',
       message: data['message'] ?? '',
       senderId: data['senderId'] ?? '',
+      senderName: data['senderName'] ?? 'N/A', // Added with default value
       target: data['target'] ?? '',
       timestamp: data['timestamp'] ?? Timestamp.now(),
     );

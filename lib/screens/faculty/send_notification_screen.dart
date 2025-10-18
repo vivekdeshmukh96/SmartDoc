@@ -30,7 +30,10 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
       _isLoading = true;
     });
     try {
-      final snapshot = await FirebaseFirestore.instance.collection('users').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'student')
+          .get();
       final students = snapshot.docs
           .map((doc) => AppUser.User.fromFirestore(doc.data(), doc.id))
           .toList();
@@ -38,7 +41,9 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
         _students = students;
       });
     } catch (e) {
-      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching students: $e')),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -54,9 +59,18 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
 
       final faculty = FirebaseAuth.instance.currentUser;
       if (faculty == null) {
-        // Handle not logged in
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to send notifications.')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
+
+      // Fetch faculty's name
+      final facultyDoc = await FirebaseFirestore.instance.collection('users').doc(faculty.uid).get();
+      final facultyName = facultyDoc.data()?['name'] ?? 'N/A';
 
       String targetType = _sendTo == 'All Students' ? 'all' : _selectedStudentId!;
 
@@ -65,6 +79,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
           'title': _titleController.text,
           'message': _messageController.text,
           'senderId': faculty.uid,
+          'senderName': facultyName, // Include sender's name
           'target': targetType,
           'timestamp': FieldValue.serverTimestamp(),
         });
@@ -90,60 +105,60 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Send Notification'),
+        elevation: 1,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(labelText: 'Title'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a title';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _messageController,
-                      decoration: const InputDecoration(labelText: 'Message'),
-                      maxLines: 5,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a message';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: _sendTo,
-                      items: ['All Students', 'Specific Student']
-                          .map((label) => DropdownMenuItem(
-                                value: label,
-                                child: Text(label),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _sendTo = value!;
-                          _selectedStudentId = null;
-                        });
-                      },
-                      decoration: const InputDecoration(labelText: 'Send To'),
-                    ),
-                    if (_sendTo == 'Specific Student') ...[
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              _buildTextField(
+                controller: _titleController,
+                labelText: 'Title',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a title';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _messageController,
+                labelText: 'Message',
+                maxLines: 5,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a message';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              _buildDropdown(
+                value: _sendTo,
+                items: ['All Students', 'Specific Student']
+                    .map((label) => DropdownMenuItem(
+                          value: label,
+                          child: Text(label),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _sendTo = value!;
+                    _selectedStudentId = null;
+                  });
+                },
+                labelText: 'Send To',
+              ),
+              if (_sendTo == 'Specific Student') ...[
+                const SizedBox(height: 16),
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildDropdown(
                         value: _selectedStudentId,
-                        hint: const Text('Select Student'),
+                        hint: 'Select Student',
                         items: _students
                             .map((student) => DropdownMenuItem(
                                   value: student.id,
@@ -161,19 +176,64 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                           }
                           return null;
                         },
+                        labelText: 'Student',
                       ),
-                    ],
-                    const SizedBox(height: 32),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _sendNotification,
-                        child: const Text('Send Notification'),
-                      ),
-                    ),
-                  ],
+              ],
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _sendNotification,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Send Notification', style: TextStyle(fontSize: 16)),
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      validator: validator,
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    T? value,
+    String? hint,
+    required List<DropdownMenuItem<T>> items,
+    void Function(T?)? onChanged,
+    String? Function(T?)? validator,
+    required String labelText,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      hint: hint != null ? Text(hint) : null,
+      items: items,
+      onChanged: onChanged,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 }
