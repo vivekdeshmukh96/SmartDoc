@@ -11,6 +11,18 @@ class FacultyVerifyTab extends StatefulWidget {
 }
 
 class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
+  Future<void> _updateDocumentStatus(doc.Document document, String status) async {
+    // Get the reference to the document
+    final docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(document.userId)
+        .collection('documents')
+        .doc(document.id);
+
+    // Update the status
+    await docRef.update({'status': status});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,31 +60,56 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: ListTile(
-                  leading: const Icon(Icons.description, color: Colors.blue),
-                  title: Text(document.name ?? 'No Name'),
-                  subtitle: Text('Status: ${document.status}'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () async {
-                    if (document.url != null) {
-                      final Uri url = Uri.parse(document.url!);
-                      try {
-                        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Could not launch $url'),
-                            ),
-                          );
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.description, color: Colors.blue),
+                      title: Text(document.name ?? 'No Name'),
+                      subtitle: Text('Status: ${document.status}'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () async {
+                        if (document.url != null) {
+                          final Uri url = Uri.parse(document.url!);
+                          try {
+                            if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Could not launch $url'),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error launching document: $e'),
+                              ),
+                            );
+                          }
                         }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error launching document: $e'),
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              _updateDocumentStatus(document, 'approved');
+                            },
+                            child: const Text('Approve'),
                           ),
-                        );
-                      }
-                    }
-                  },
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: () {
+                              _updateDocumentStatus(document, 'rejected');
+                            },
+                            child: const Text('Reject'),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
                 ),
               );
             },
