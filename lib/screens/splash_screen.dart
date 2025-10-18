@@ -16,12 +16,37 @@ class _SplashScreenState extends State<SplashScreen> {
   bool _showLogo = false;
   bool _showText = false;
   bool _isSmartAnimationFinished = false;
+  late Widget _smartTextAnimation;
 
   @override
   void initState() {
     super.initState();
     Timer(const Duration(milliseconds: 300), () => setState(() => _showLogo = true));
     Timer(const Duration(milliseconds: 1000), () => setState(() => _showText = true));
+
+    _smartTextAnimation = AnimatedTextKit(
+      isRepeatingAnimation: false,
+      animatedTexts: [
+        TypewriterAnimatedText(
+          'Smart',
+          speed: const Duration(milliseconds: 150),
+          cursor: '',
+          textStyle: const TextStyle(
+            fontSize: 38,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1A237E), // Dark Navy Blue
+            letterSpacing: 1.5,
+          ),
+        ),
+      ],
+      onFinished: () {
+        if (mounted) {
+          setState(() {
+            _isSmartAnimationFinished = true;
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -47,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildAnimatedSmartText(),
+                    _smartTextAnimation,
                     if (_isSmartAnimationFinished) _buildAnimatedDocText(),
                   ],
                 ),
@@ -63,30 +88,6 @@ class _SplashScreenState extends State<SplashScreen> {
       nextScreen: const RoleSelectionScreen(),
       splashTransition: SplashTransition.fadeTransition,
       backgroundColor: Colors.white,
-    );
-  }
-
-  Widget _buildAnimatedSmartText() {
-    return AnimatedTextKit(
-      isRepeatingAnimation: false,
-      animatedTexts: [
-        TypewriterAnimatedText(
-          'Smart',
-          speed: const Duration(milliseconds: 150),
-          cursor: '',
-          textStyle: const TextStyle(
-            fontSize: 38,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A237E), // Dark Navy Blue
-            letterSpacing: 1.5,
-          ),
-        ),
-      ],
-      onFinished: () {
-        setState(() {
-          _isSmartAnimationFinished = true;
-        });
-      },
     );
   }
 
