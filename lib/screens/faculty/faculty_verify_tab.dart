@@ -64,8 +64,8 @@ class _FacultyVerifyTabState extends State<FacultyVerifyTab> {
                   children: [
                     ListTile(
                       leading: const Icon(Icons.description, color: Colors.blue),
-                      title: Text(document.name ?? 'No Name'),
-                      subtitle: Text('Status: ${document.status.toString().split('.').last}'),
+                      title: Text(document.name),
+                      subtitle: Text('Status: ${document.status.name}'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: () async {
                         if (document.url != null) {

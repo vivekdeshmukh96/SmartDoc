@@ -176,12 +176,12 @@ class StudentProfileScreen extends StatelessWidget {
                 ),
                 child: ListTile(
                   leading: const Icon(Icons.description, color: Colors.blue),
-                  title: Text(document.name ?? 'No Name'),
-                  subtitle: Text('Status: ${document.status}'),
+                  title: Text(document.name),
+                  subtitle: Text('Status: ${document.status.name}'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () async {
-                    if (document.url != null && document.url!.isNotEmpty) {
-                      final Uri url = Uri.parse(document.url!);
+                    if (document.downloadUrl != null && document.downloadUrl!.isNotEmpty) {
+                      final Uri url = Uri.parse(document.downloadUrl!);
                       if (await canLaunchUrl(url)) {
                         await launchUrl(url, mode: LaunchMode.externalApplication);
                       } else {
