@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smart_doc/models/document.dart' as doc_model;
 import 'package:smart_doc/models/user.dart' as user_model;
 import 'package:smart_doc/models/faculty.dart' as faculty_model;
+import 'package:smart_doc/models/role.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class AdminHomeTab extends StatefulWidget {
@@ -36,12 +37,11 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
       final users = usersSnapshot.docs.map((doc) => user_model.User.fromFirestore(doc.data(), doc.id)).toList();
       final faculty = facultySnapshot.docs.map((doc) => faculty_model.Faculty.fromFirestore(doc)).toList();
 
-      final userMap = {for (var user in users) user.id: user};
       final facultyMap = {for (var f in faculty) f.id: f};
 
       final roles = <String, int>{
-        'student': users.where((u) => u.role == user_model.Role.student).length,
-        'admin': users.where((u) => u.role == user_model.Role.admin).length,
+        'student': users.where((u) => u.role == Role.student).length,
+        'admin': users.where((u) => u.role == Role.admin).length,
         'faculty': faculty.length,
       };
 
