@@ -180,23 +180,23 @@ class StudentProfileScreen extends StatelessWidget {
                   subtitle: Text('Status: ${document.status}'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () async {
-                    if (document.url != null) {
+                    if (document.url != null && document.url!.isNotEmpty) {
                       final Uri url = Uri.parse(document.url!);
-                      try {
-                        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Could not launch $url'),
-                            ),
-                          );
-                        }
-                      } catch (e) {
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Error launching document: $e'),
+                            content: Text('Could not launch $url'),
                           ),
                         );
                       }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Document URL is not available.'),
+                        ),
+                      );
                     }
                   },
                 ),
