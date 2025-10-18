@@ -45,7 +45,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
       }
 
       final documents = allDocumentsSnapshot.docs.map((doc) => doc_model.Document.fromFirestore(doc.data(), doc.id)).toList();
-      final facultyDocuments = documents.where((doc) => userMap[doc.uploadedBy]?.role == user_model.Role.faculty).toList();
+      final facultyDocuments = documents.where((doc) => userMap[doc.uploadedByUserId]?.role == user_model.Role.faculty).toList();
 
       final recentDocuments = facultyDocuments.take(5).toList();
 
@@ -212,7 +212,7 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
                       return ListTile(
                         leading: const Icon(Icons.description),
                         title: Text(doc.name),
-                        subtitle: Text('Uploaded on: ${doc.uploadedAt.toLocal().toString().substring(0, 10)}'),
+                        subtitle: Text('Uploaded on: ${doc.uploadedDate.substring(0, 10)}'),
                       );
                     },
                   ),
