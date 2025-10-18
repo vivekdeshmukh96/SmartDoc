@@ -58,8 +58,8 @@ class _FacultyProfileTabState extends State<FacultyProfileTab> {
     final filePath = '$_faculty!.id/$fileName';
 
     try {
-      await _supabase.storage.from('profile_photos').upload(filePath, file);
-      final imageUrl = _supabase.storage.from('profile_photos').getPublicUrl(filePath);
+      await _supabase.storage.from('Document Bucket').upload('profile_photos/$filePath', file);
+      final imageUrl = _supabase.storage.from('Document Bucket').getPublicUrl('profile_photos/$filePath');
 
       await FirebaseFirestore.instance.collection('faculty').doc(_faculty!.id).update({
         'photoURL': imageUrl,
